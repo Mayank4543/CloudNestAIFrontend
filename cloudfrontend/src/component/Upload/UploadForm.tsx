@@ -1,10 +1,28 @@
 import React, { useState, ChangeEvent, FormEvent } from 'react';
+import axios, { AxiosError, isAxiosError } from 'axios';
+
+interface UploadResponse {
+    success: boolean;
+    message: string;
+    data: {
+        id: string;
+        filename: string;
+        originalname: string;
+        mimetype: string;
+        size: number;
+        path: string;
+        createdAt: string;
+        tags: string[];
+    };
+}
 
 const UploadForm: React.FC = () => {
     const [files, setFiles] = useState<FileList | null>(null);
     const [tags, setTags] = useState<string>('');
     const [isUploading, setIsUploading] = useState<boolean>(false);
     const [uploadSuccess, setUploadSuccess] = useState<boolean>(false);
+    const [responseMessage, setResponseMessage] = useState<string>('');
+    const [errorMessage, setErrorMessage] = useState<string>('');
 
     // Handle file selection
     const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
@@ -20,41 +38,70 @@ const UploadForm: React.FC = () => {
         setTags(e.target.value);
     };
 
-    // Mock upload function
-    const uploadFiles = async (): Promise<void> => {
-        return new Promise((resolve) => {
-            // Simulate API call delay
-            setTimeout(() => {
-                console.log('Files uploaded:', files);
-                console.log('Tags:', tags.split(',').map(tag => tag.trim()).filter(tag => tag !== ''));
-                resolve();
-            }, 1500);
-        });
-    };
-
     // Handle form submission
     const handleSubmit = async (e: FormEvent) => {
         e.preventDefault();
 
         if (!files || files.length === 0) {
-            alert('Please select at least one file');
+            setErrorMessage('Please select at least one file');
             return;
         }
 
         setIsUploading(true);
+        setErrorMessage('');
+        setResponseMessage('');
 
         try {
-            await uploadFiles();
-            setUploadSuccess(true);
-            // Reset form
-            setFiles(null);
-            setTags('');
-            // Reset the file input by targeting the form element
-            const form = e.target as HTMLFormElement;
-            form.reset();
-        } catch (error) {
+            const formData = new FormData();
+
+            // Append each file to the FormData
+            Array.from(files).forEach((file) => {
+                formData.append('files', file);
+            });
+
+            // Append tags if they exist
+            if (tags.trim()) {
+                const tagArray = tags.split(',').map(tag => tag.trim()).filter(tag => tag !== '');
+                formData.append('tags', JSON.stringify(tagArray));
+            }
+
+            // Make API request
+            const response = await axios.post<UploadResponse>(
+                'https://cloudnestaibackend.onrender.com/api/files/upload',
+                formData,
+                {
+                    headers: {
+                        'Content-Type': 'multipart/form-data',
+                    },
+                }
+            );
+
+            // Handle successful response
+            if (response.data.success) {
+                setUploadSuccess(true);
+                setResponseMessage(response.data.message || 'Files uploaded successfully!');
+                console.log('Upload response:', response.data);
+
+                // Reset form
+                setFiles(null);
+                setTags('');
+                // Reset the file input by targeting the form element
+                const form = e.target as HTMLFormElement;
+                form.reset();
+            } else {
+                throw new Error(response.data.message || 'Upload failed');
+            }
+        } catch (error: unknown) {
+            setUploadSuccess(false);
             console.error('Upload failed:', error);
-            alert('Upload failed. Please try again.');
+
+            if (isAxiosError(error)) {
+                setErrorMessage(error.response?.data?.message || 'Network error occurred. Please try again.');
+            } else if (error instanceof Error) {
+                setErrorMessage(error.message);
+            } else {
+                setErrorMessage('Upload failed. Please try again.');
+            }
         } finally {
             setIsUploading(false);
         }
@@ -72,13 +119,17 @@ const UploadForm: React.FC = () => {
         <div className="max-w-md mx-auto bg-white rounded-xl shadow-md overflow-hidden md:max-w-2xl p-6 my-8">
             <h2 className="text-xl font-semibold text-gray-800 mb-4">Upload Files</h2>
 
-            {uploadSuccess && (
+            {uploadSuccess && responseMessage && (
                 <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-4">
-                    Files uploaded successfully!
+                    {responseMessage}
                 </div>
             )}
 
-            <form onSubmit={handleSubmit} className="space-y-4">
+            {errorMessage && (
+                <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+                    {errorMessage}
+                </div>
+            )}            <form onSubmit={handleSubmit} className="space-y-4">
                 {/* File Input */}
                 <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">

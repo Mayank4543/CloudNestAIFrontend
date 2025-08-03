@@ -31,7 +31,7 @@ export default function Home() {
               </p>
               <div className="flex flex-col sm:flex-row gap-4">
                 <Link
-                  href="/dashroute"
+                  href="/dashboard"
                   className="px-6 py-3 bg-[#18b26f] text-white font-medium rounded-md hover:bg-[#149d5f] transition-colors text-center"
                 >
                   Go to My Dashboard

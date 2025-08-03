@@ -1,9 +1,10 @@
 import React from 'react';
+import Loader from '@/component/common/Loader';
 
+// This is a global loading component for Next.js App Router
+// It will be used for all routes unless overridden
 export default function Loading() {
-    return (
-        <div className="flex justify-center items-center h-[50vh]">
-            <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-blue-500"></div>
-        </div>
-    );
+    // We can dynamically determine if we're in a full-screen context
+    // but for now using a consistent loading UI
+    return <Loader size="large" />;
 }

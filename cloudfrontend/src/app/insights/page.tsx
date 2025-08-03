@@ -1,39 +1,41 @@
 'use client';
 
 import React, { useState } from 'react';
-import InsightsChart from '@/component/Insights/InsightsChart';
-import Link from 'next/link';
+import DashboardInsightsChart from '@/component/Dashboard/Insights/DashboardInsightsChart';
+import DashboardLayout from '@/component/Dashboard/Layout/DashboardLayout';
 
 export default function InsightsPage() {
     const [isDarkMode, setIsDarkMode] = useState(false);
 
     return (
-        <div className="space-y-6">
-            <div className="flex justify-between items-center">
-                <h1 className="text-3xl font-bold text-gray-800">File Insights</h1>
-                <div className="flex space-x-4">
+        <DashboardLayout>
+            <div className="p-6">
+                <div className="flex justify-between items-center mb-6">
+                    <div>
+                        <h1 className="text-2xl font-semibold text-gray-800">File Insights</h1>
+                        <p className="text-sm text-gray-500 mt-1">
+                            Analytics and statistics for your stored files
+                        </p>
+                    </div>
                     <button
                         onClick={() => setIsDarkMode(!isDarkMode)}
-                        className="px-4 py-2 bg-white text-gray-600 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
+                        className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${isDarkMode
+                            ? 'bg-gray-800 text-white hover:bg-gray-700'
+                            : 'bg-white text-gray-600 border border-gray-300 hover:bg-gray-50'
+                            }`}
                     >
                         {isDarkMode ? 'Light Mode' : 'Dark Mode'}
                     </button>
-                    <Link
-                        href="/"
-                        className="px-4 py-2 bg-white text-blue-600 border border-blue-600 rounded-md hover:bg-blue-50 transition-colors"
-                    >
-                        Back to Files
-                    </Link>
+                </div>
+
+                <div className="bg-white border border-gray-200 rounded-lg shadow-sm p-6">
+                    <DashboardInsightsChart
+                        isDarkMode={isDarkMode}
+                        title="File Storage Analytics"
+                        description="View statistics and trends about your stored files"
+                    />
                 </div>
             </div>
-
-            <div className="bg-white rounded-lg shadow-md p-6">
-                <InsightsChart
-                    isDarkMode={isDarkMode}
-                    title="File Storage Analytics"
-                    description="View statistics and trends about your stored files"
-                />
-            </div>
-        </div>
+        </DashboardLayout>
     );
 }

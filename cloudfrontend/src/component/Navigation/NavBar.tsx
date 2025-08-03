@@ -7,13 +7,18 @@ import { usePathname } from 'next/navigation';
 const NavBar: React.FC = () => {
     const pathname = usePathname();
 
+    // Don't show navbar on dashboard pages
+    if (pathname.startsWith('/dashboard') || pathname === '/upload' || pathname === '/insights') {
+        return null;
+    }
+
     return (
         <nav className="bg-white shadow-md">
             <div className="container mx-auto px-4">
                 <div className="flex justify-between h-16">
                     <div className="flex items-center">
                         <Link href="/" className="flex-shrink-0 flex items-center">
-                            <span className="text-xl font-bold text-blue-600">CloudNest</span>
+                            <span className="text-xl font-bold text-[#18b26f]">CloudNest</span>
                         </Link>
                     </div>
 
@@ -22,8 +27,8 @@ const NavBar: React.FC = () => {
                             <Link
                                 href="/"
                                 className={`inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium ${pathname === '/'
-                                        ? 'border-blue-500 text-gray-900'
-                                        : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'
+                                    ? 'border-blue-500 text-gray-900'
+                                    : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'
                                     }`}
                             >
                                 Files
@@ -32,8 +37,8 @@ const NavBar: React.FC = () => {
                             <Link
                                 href="/upload"
                                 className={`inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium ${pathname === '/upload'
-                                        ? 'border-blue-500 text-gray-900'
-                                        : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'
+                                    ? 'border-blue-500 text-gray-900'
+                                    : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'
                                     }`}
                             >
                                 Upload
@@ -42,11 +47,21 @@ const NavBar: React.FC = () => {
                             <Link
                                 href="/insights"
                                 className={`inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium ${pathname === '/insights'
-                                        ? 'border-blue-500 text-gray-900'
-                                        : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'
+                                    ? 'border-blue-500 text-gray-900'
+                                    : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'
                                     }`}
                             >
                                 Insights
+                            </Link>
+
+                            <Link
+                                href="/admin"
+                                className={`inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium ${pathname === '/admin' || pathname.startsWith('/admin/')
+                                    ? 'border-[#18b26f] text-gray-900'
+                                    : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'
+                                    }`}
+                            >
+                                Admin Console
                             </Link>
                         </div>
                     </div>
@@ -86,18 +101,28 @@ const NavBar: React.FC = () => {
                     <Link
                         href="/"
                         className={`block pl-3 pr-4 py-2 border-l-4 text-base font-medium ${pathname === '/'
-                                ? 'bg-blue-50 border-blue-500 text-blue-700'
-                                : 'border-transparent text-gray-600 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-800'
+                            ? 'bg-blue-50 border-blue-500 text-blue-700'
+                            : 'border-transparent text-gray-600 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-800'
                             }`}
                     >
                         Files
                     </Link>
 
                     <Link
+                        href="/admin"
+                        className={`block pl-3 pr-4 py-2 border-l-4 text-base font-medium ${pathname === '/admin' || pathname.startsWith('/admin/')
+                            ? 'bg-[#e6f5ee] border-[#18b26f] text-[#18b26f]'
+                            : 'border-transparent text-gray-600 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-800'
+                            }`}
+                    >
+                        Admin Console
+                    </Link>
+
+                    <Link
                         href="/upload"
                         className={`block pl-3 pr-4 py-2 border-l-4 text-base font-medium ${pathname === '/upload'
-                                ? 'bg-blue-50 border-blue-500 text-blue-700'
-                                : 'border-transparent text-gray-600 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-800'
+                            ? 'bg-blue-50 border-blue-500 text-blue-700'
+                            : 'border-transparent text-gray-600 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-800'
                             }`}
                     >
                         Upload
@@ -106,8 +131,8 @@ const NavBar: React.FC = () => {
                     <Link
                         href="/insights"
                         className={`block pl-3 pr-4 py-2 border-l-4 text-base font-medium ${pathname === '/insights'
-                                ? 'bg-blue-50 border-blue-500 text-blue-700'
-                                : 'border-transparent text-gray-600 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-800'
+                            ? 'bg-blue-50 border-blue-500 text-blue-700'
+                            : 'border-transparent text-gray-600 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-800'
                             }`}
                     >
                         Insights

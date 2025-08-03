@@ -116,35 +116,58 @@ const UploadForm: React.FC = () => {
     };
 
     return (
-        <div className="max-w-md mx-auto bg-white rounded-xl shadow-md overflow-hidden md:max-w-2xl p-6 my-8">
-            <h2 className="text-xl font-semibold text-gray-800 mb-4">Upload Files</h2>
+        <div className="font-['Inter',system-ui,sans-serif] max-w-3xl mx-auto bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden p-6 my-8">
+            <div className="flex items-center justify-between mb-6">
+                <h2 className="text-xl font-semibold text-gray-800">Upload Files</h2>
+                <a
+                    href="/dashboard"
+                    className="inline-flex items-center text-sm text-gray-600 hover:text-[#18b26f] transition-all duration-150"
+                >
+                    <svg className="mr-2 h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 15l-3-3m0 0l3-3m-3 3h8M3 12a9 9 0 1118 0 9 9 0 01-18 0z" />
+                    </svg>
+                    Back to Dashboard
+                </a>
+            </div>
 
             {uploadSuccess && responseMessage && (
-                <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-4">
-                    {responseMessage}
+                <div className="bg-[#e6f5ee] border border-[#18b26f] text-[#18b26f] px-4 py-3 rounded mb-6">
+                    <div className="flex items-center">
+                        <svg className="h-5 w-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                        </svg>
+                        {responseMessage}
+                    </div>
                 </div>
             )}
 
             {errorMessage && (
-                <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
-                    {errorMessage}
+                <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-6">
+                    <div className="flex items-center">
+                        <svg className="h-5 w-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                        </svg>
+                        {errorMessage}
+                    </div>
                 </div>
-            )}            <form onSubmit={handleSubmit} className="space-y-4">
+            )}
+
+            <form onSubmit={handleSubmit} className="space-y-6">
                 {/* File Input */}
                 <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                         Select Files
                     </label>
                     <div className="flex items-center justify-center w-full">
-                        <label className="flex flex-col w-full h-32 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50 focus-within:outline-none">
-                            <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                                <svg className="w-8 h-8 text-gray-400 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <label className="flex flex-col w-full h-40 border-2 border-dashed border-[#18b26f]/30 bg-gray-50 rounded-lg cursor-pointer hover:bg-[#f7fcfa] hover:border-[#18b26f]/50 transition-all duration-200 focus-within:outline-none">
+                            <div className="flex flex-col items-center justify-center pt-6 pb-6">
+                                <svg className="w-12 h-12 text-[#18b26f] mb-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
                                 </svg>
-                                <p className="text-sm text-gray-500">
-                                    <span className="font-semibold">Click to upload</span> or drag and drop
+                                <p className="text-base text-gray-600">
+                                    <span className="font-semibold text-[#18b26f]">Click to upload</span> or drag and drop
                                 </p>
-                                <p className="text-xs text-gray-500">
+                                <p className="text-sm text-gray-500 mt-1">
                                     You can select multiple files
                                 </p>
                             </div>
@@ -160,16 +183,40 @@ const UploadForm: React.FC = () => {
 
                 {/* File Preview */}
                 {files && files.length > 0 && (
-                    <div className="mt-4">
-                        <h3 className="text-sm font-medium text-gray-700 mb-2">Selected Files:</h3>
-                        <ul className="bg-gray-50 rounded-lg p-3 max-h-40 overflow-y-auto space-y-2">
-                            {Array.from(files).map((file, index) => (
-                                <li key={index} className="text-sm text-gray-600 flex justify-between">
-                                    <span className="truncate max-w-xs">{file.name}</span>
-                                    <span className="text-gray-400">{formatFileSize(file.size)}</span>
-                                </li>
-                            ))}
-                        </ul>
+                    <div className="mt-6">
+                        <h3 className="text-sm font-medium text-gray-700 mb-3">Selected Files</h3>
+                        <div className="bg-white border border-gray-200 rounded-lg">
+                            <ul className="divide-y divide-gray-200 max-h-60 overflow-y-auto">
+                                {Array.from(files).map((file, index) => (
+                                    <li key={index} className="px-4 py-3 flex items-center justify-between">
+                                        <div className="flex items-center space-x-3">
+                                            <div className="flex-shrink-0 h-10 w-10 flex items-center justify-center bg-[#e6f5ee] text-[#18b26f] rounded">
+                                                {file.type.includes('image') ? (
+                                                    <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                                                        <path fillRule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clipRule="evenodd" />
+                                                    </svg>
+                                                ) : file.type.includes('pdf') ? (
+                                                    <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                                                        <path fillRule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clipRule="evenodd" />
+                                                    </svg>
+                                                ) : (
+                                                    <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                                                        <path fillRule="evenodd" d="M4 4a2 2 0 012-2h8a2 2 0 012 2v12a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clipRule="evenodd" />
+                                                    </svg>
+                                                )}
+                                            </div>
+                                            <div className="min-w-0 flex-1">
+                                                <p className="text-sm font-medium text-gray-900 truncate">{file.name}</p>
+                                                <p className="text-xs text-gray-500">{formatFileSize(file.size)}</p>
+                                            </div>
+                                        </div>
+                                        <div className="text-xs text-gray-400">
+                                            {file.type.split('/')[1]?.toUpperCase() || 'FILE'}
+                                        </div>
+                                    </li>
+                                ))}
+                            </ul>
+                        </div>
                     </div>
                 )}
 
@@ -178,28 +225,36 @@ const UploadForm: React.FC = () => {
                     <label htmlFor="tags" className="block text-sm font-medium text-gray-700 mb-2">
                         Tags (comma separated, optional)
                     </label>
-                    <input
-                        type="text"
-                        id="tags"
-                        value={tags}
-                        onChange={handleTagChange}
-                        placeholder="tag1, tag2, tag3"
-                        className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                    />
+                    <div className="mt-1 relative rounded-md shadow-sm">
+                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <svg className="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+                            </svg>
+                        </div>
+                        <input
+                            type="text"
+                            id="tags"
+                            value={tags}
+                            onChange={handleTagChange}
+                            placeholder="tag1, tag2, tag3"
+                            className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-[#18b26f] focus:border-[#18b26f] sm:text-sm transition-all duration-150"
+                        />
+                    </div>
+                    <p className="mt-1 text-xs text-gray-500">Tags help you organize and find files more easily</p>
                 </div>
 
                 {/* Submit Button */}
-                <div className="flex justify-end">
+                <div className="flex justify-end pt-4">
                     <button
                         type="submit"
                         disabled={isUploading || !files}
                         className={`
-              px-4 py-2 rounded-md text-sm font-medium text-white
-              ${isUploading || !files
+                            px-4 py-2 rounded-md text-sm font-medium text-white 
+                            ${isUploading || !files
                                 ? 'bg-gray-400 cursor-not-allowed'
-                                : 'bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500'
+                                : 'bg-[#18b26f] hover:bg-[#149d5f] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#18b26f] transition-all duration-150'
                             }
-            `}
+                        `}
                     >
                         {isUploading ? (
                             <span className="flex items-center">
@@ -209,7 +264,14 @@ const UploadForm: React.FC = () => {
                                 </svg>
                                 Uploading...
                             </span>
-                        ) : 'Upload Files'}
+                        ) : (
+                            <span className="flex items-center">
+                                <svg className="mr-2 h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                                </svg>
+                                Upload Files
+                            </span>
+                        )}
                     </button>
                 </div>
             </form>

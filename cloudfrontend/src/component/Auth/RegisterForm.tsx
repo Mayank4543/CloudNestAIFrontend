@@ -48,7 +48,14 @@ export default function RegisterForm() {
 
     return (
         <div className="bg-white p-8 rounded-lg shadow-md w-full max-w-md">
-            <h2 className="text-2xl font-bold mb-6 text-center text-gray-800">Create an Account</h2>
+            <div className="flex flex-col items-center mb-6">
+                <img
+                    src="/cloudnest-logo.svg"
+                    alt="CloudNest Logo"
+                    className="h-20 w-20 mb-4"
+                />
+                <h2 className="text-2xl font-bold text-center text-gray-800">Create an Account</h2>
+            </div>
 
             {error && (
                 <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">

@@ -16,6 +16,15 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "CloudNest AI - Cloud Storage",
   description: "Modern cloud storage with AI-powered insights",
+  icons: {
+    icon: [
+      {
+        url: '/favicon-32x32.svg',
+        type: 'image/svg+xml',
+        sizes: '32x32'
+      }
+    ]
+  }
 };
 
 export default function RootLayout({
@@ -25,6 +34,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
+      <head>
+        <link rel="manifest" href="/manifest.json" />
+        <link rel="icon" href="/favicon.ico" sizes="any" />
+      </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased bg-gray-50 min-h-screen flex flex-col`}
       >

@@ -18,6 +18,11 @@ const NavBar: React.FC = () => {
                 <div className="flex justify-between h-16">
                     <div className="flex items-center">
                         <Link href="/" className="flex-shrink-0 flex items-center">
+                            <img
+                                src="/cloudnest-logo.svg"
+                                alt="CloudNest Logo"
+                                className="h-10 w-10 mr-2"
+                            />
                             <span className="text-xl font-bold text-[#18b26f]">CloudNest</span>
                         </Link>
                     </div>

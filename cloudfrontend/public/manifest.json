@@ -1,0 +1,16 @@
+{
+  "name": "CloudNest AI",
+  "short_name": "CloudNest",
+  "icons": [
+    {
+      "src": "/favicon-32x32.svg",
+      "sizes": "32x32",
+      "type": "image/svg+xml"
+    }
+  ],
+  "theme_color": "#18b26f",
+  "background_color": "#ffffff",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "portrait"
+}

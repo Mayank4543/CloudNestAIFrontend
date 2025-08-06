@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import DashboardLayout from '@/component/Dashboard/Layout/DashboardLayout';
+import ProtectedRoute from '@/component/common/ProtectedRoute';
 import axios from 'axios';
 
 interface FileData {
@@ -32,7 +33,7 @@ interface ApiResponse {
     pagination: PaginationData;
 }
 
-export default function Dashboard() {
+function DashboardContent() {
     const [files, setFiles] = useState<FileData[]>([]);
     const [loading, setLoading] = useState<boolean>(true);
     const [error, setError] = useState<string | null>(null);
@@ -331,5 +332,13 @@ export default function Dashboard() {
                 </div>
             </div>
         </DashboardLayout>
+    );
+}
+
+export default function Dashboard() {
+    return (
+        <ProtectedRoute requireAuth={true}>
+            <DashboardContent />
+        </ProtectedRoute>
     );
 }

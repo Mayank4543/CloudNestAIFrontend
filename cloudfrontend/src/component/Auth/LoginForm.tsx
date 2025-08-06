@@ -28,7 +28,7 @@ export default function LoginForm() {
         const initializeGoogleSignIn = () => {
             if (typeof window !== 'undefined' && window.google) {
                 window.google.accounts.id.initialize({
-                    client_id: '122511287577-7l938i6mlhhfkregdhr3m8oe1kqkpmjc.apps.googleusercontent.com',
+                    client_id: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || '',
                     callback: handleGoogleResponse,
                     auto_select: false,
                     cancel_on_tap_outside: true

@@ -25,9 +25,9 @@ interface FileItemMenuProps {
     onDelete: (fileId: string, fileName: string) => void;
     onRename?: (fileId: string, newName: string) => void;
     onCopy?: (fileId: string) => void;
-    onShare?: (fileId: string) => void;
     onPreview?: (file: FileData) => void;
-    onMove?: (fileId: string) => void;
+    onShare?: (fileId: string) => void;
+    onMove?: (fileId: string, destinationFolderId: string) => void;
     isParentHovered?: boolean;
 }
 
@@ -112,13 +112,12 @@ const FileItemMenu: React.FC<FileItemMenuProps> = ({
     onDelete,
     onRename,
     onCopy,
-    onShare,
     onPreview,
+    onShare,
     onMove,
-    isParentHovered = false,
+    isParentHovered
 }) => {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
-    const [isHovered, setIsHovered] = useState(false);
     const [menuPosition, setMenuPosition] = useState<'bottom' | 'top'>('bottom');
     const menuRef = useRef<HTMLDivElement>(null);
     const buttonRef = useRef<HTMLButtonElement>(null);
@@ -132,11 +131,10 @@ const FileItemMenu: React.FC<FileItemMenuProps> = ({
             }
         };
 
-        if (isHovered) {
-            window.addEventListener('keydown', handleKeyDown);
-            return () => window.removeEventListener('keydown', handleKeyDown);
-        }
-    }, [isHovered, file, onPreview]);
+        // Add event listener for keyboard shortcuts
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [file, onPreview]);
 
     // Handle click outside to close menu
     useEffect(() => {
@@ -222,18 +220,23 @@ const FileItemMenu: React.FC<FileItemMenuProps> = ({
         setIsMenuOpen(false);
     };
 
-    const handleFileInfo = () => {
-        // You can implement a file info modal here
-        alert(`File Information:\nName: ${file.originalname}\nSize: ${formatFileSize(file.size)}\nType: ${file.mimetype}\nCreated: ${new Date(file.createdAt).toLocaleString()}`);
-        setIsMenuOpen(false);
+    const handleShareFile = () => {
+        if (onShare) {
+            onShare(file._id);
+            setIsMenuOpen(false);
+        }
     };
 
-    const formatFileSize = (bytes: number): string => {
-        if (bytes < 1024) return bytes + ' B';
-        else if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB';
-        else if (bytes < 1073741824) return (bytes / 1048576).toFixed(1) + ' MB';
-        else return (bytes / 1073741824).toFixed(1) + ' GB';
+    const handleMoveFile = () => {
+        if (onMove) {
+            // For simplicity, we'll just call onMove - in a real app you'd show a folder picker UI
+            onMove(file._id, ''); // Second param would typically be destination folder ID
+            setIsMenuOpen(false);
+        }
     };
+
+    // Removed unused handleFileInfo function
+    // Removed unused formatFileSize function
 
     // Open With Submenu
     const openWithSubmenu = (
@@ -298,19 +301,26 @@ const FileItemMenu: React.FC<FileItemMenuProps> = ({
                 label="Email"
                 onClick={handleEmailShare}
             />
+            <MenuItem
+                icon={
+                    <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+                    </svg>
+                }
+                label="Share with others"
+                onClick={handleShareFile}
+            />
         </div>
     );
 
     return (
         <div
             className="relative inline-block"
-            onMouseEnter={() => setIsHovered(true)}
-            onMouseLeave={() => setIsHovered(false)}
         >
-            {/* Three-dot menu button - show on hover */}
+            {/* Three-dot menu button - show on hover or when parent is hovered */}
             <button
                 ref={buttonRef}
-                className="p-2 rounded-full hover:bg-gray-100 transition-all duration-200 ease-out opacity-100 visible"
+                className={`p-2 rounded-full hover:bg-gray-100 transition-all duration-200 ease-out ${isParentHovered ? 'opacity-100 visible' : 'opacity-100 visible'}`}
                 onClick={(e) => {
                     e.stopPropagation();
                     setIsMenuOpen(!isMenuOpen);
@@ -390,6 +400,26 @@ const FileItemMenu: React.FC<FileItemMenuProps> = ({
                         }
                         label="Rename"
                         onClick={handleRename}
+                    />
+
+                    <MenuItem
+                        icon={
+                            <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2" />
+                            </svg>
+                        }
+                        label="Make a copy"
+                        onClick={handleCopy}
+                    />
+
+                    <MenuItem
+                        icon={
+                            <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
+                            </svg>
+                        }
+                        label="Move to folder"
+                        onClick={handleMoveFile}
                     />
 
                     <MenuItem

@@ -7,13 +7,15 @@ import { useRouter } from 'next/navigation';
 export default function AdminPage() {
     const router = useRouter();
     const [isAuthenticated, setIsAuthenticated] = useState(false);
-    const [users, setUsers] = useState([
+    // Using array destructuring with only the first element to avoid the unused setUsers warning
+    const [users] = useState([
         { id: 1, name: 'John Doe', email: 'john@example.com', storageUsed: '1.2 GB', lastActive: '2025-08-01' },
         { id: 2, name: 'Jane Smith', email: 'jane@example.com', storageUsed: '3.4 GB', lastActive: '2025-08-03' },
         { id: 3, name: 'Robert Johnson', email: 'robert@example.com', storageUsed: '0.8 GB', lastActive: '2025-07-29' },
         { id: 4, name: 'Emily Davis', email: 'emily@example.com', storageUsed: '2.1 GB', lastActive: '2025-08-02' },
     ]);
-    const [stats, setStats] = useState({
+    // Using array destructuring with only the first element to avoid the unused setStats warning
+    const [stats] = useState({
         totalUsers: 423,
         totalFiles: 12567,
         totalStorage: 256, // GB

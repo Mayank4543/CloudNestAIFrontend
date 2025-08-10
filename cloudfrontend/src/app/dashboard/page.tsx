@@ -81,9 +81,10 @@ function DashboardContent() {
                 } else {
                     setError(response.data.message || 'Failed to fetch files');
                 }
-            } catch (err: any) {
+            } catch (err: Error | unknown) {
                 console.error('Error fetching files:', err);
-                if (err.response?.status === 401) {
+                const error = err as { response?: { status?: number } };
+                if (error.response?.status === 401) {
                     setError('Session expired. Please log in again.');
                 } else {
                     setError('An error occurred while fetching files. Please try again later.');
@@ -127,101 +128,8 @@ function DashboardContent() {
             return sortOrder === 'asc' ? comparison : -comparison;
         });
 
-    // Helper functions
-    const formatFileSize = (bytes: number): string => {
-        if (bytes < 1024) return bytes + ' B';
-        else if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB';
-        else if (bytes < 1073741824) return (bytes / 1048576).toFixed(1) + ' MB';
-        else return (bytes / 1073741824).toFixed(1) + ' GB';
-    };
-
-    const getFileType = (mimetype: string): string => {
-        const parts = mimetype.split('/');
-        if (parts.length > 1) {
-            return parts[1].toUpperCase();
-        }
-        return parts[0].toUpperCase();
-    };
-
-    const formatDate = (dateString: string): string => {
-        const date = new Date(dateString);
-        return date.toLocaleDateString('en-US', {
-            month: 'short',
-            day: 'numeric',
-            hour: 'numeric',
-            minute: '2-digit'
-        });
-    };
-
-    const formatFullDate = (dateString: string): string => {
-        const date = new Date(dateString);
-        return date.toLocaleDateString('en-US', {
-            year: 'numeric',
-            month: 'short',
-            day: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit'
-        });
-    };
-
-    const getFileIcon = (mimetype: string) => {
-        if (mimetype.includes('image')) {
-            return (
-                <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clipRule="evenodd" />
-                </svg>
-            );
-        } else if (mimetype.includes('pdf')) {
-            return (
-                <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clipRule="evenodd" />
-                </svg>
-            );
-        } else if (mimetype.includes('text') || mimetype.includes('document')) {
-            return (
-                <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M4 4a2 2 0 012-2h8a2 2 0 012 2v12a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 2v1h8V6H6zm0 3v1h8V9H6zm0 3v1h5v-1H6z" clipRule="evenodd" />
-                </svg>
-            );
-        } else {
-            return (
-                <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M4 4a2 2 0 012-2h8a2 2 0 012 2v12a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clipRule="evenodd" />
-                </svg>
-            );
-        }
-    };
-
-    const getLocationPath = (path: string): string => {
-        // Extract meaningful location from path
-        const pathParts = path.split('/');
-        if (pathParts.length > 3) {
-            return `/${pathParts[pathParts.length - 2]}/`;
-        }
-        return '/uploads/';
-    };
-
-    const getPrivacyBadge = (isPublic: boolean) => {
-        if (isPublic) {
-            return (
-                <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                    <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM4.332 8.027a6.012 6.012 0 011.912-2.706C6.512 5.73 6.974 6 7.5 6A1.5 1.5 0 019 7.5V8a2 2 0 004 0 2 2 0 011.523-1.943A5.977 5.977 0 0116 10c0 3.314-2.686 6-6 6s-6-2.686-6-6a5.99 5.99 0 01.332-2.027z" clipRule="evenodd" />
-                    </svg>
-                    Public
-                </span>
-            );
-        } else {
-            return (
-                <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
-                    <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
-                    </svg>
-                    Private
-                </span>
-            );
-        }
-    };
+    // Helper functions are removed since they're not used in this component
+    // They are likely used in child components that are imported
 
     const handleDelete = async (fileId: string, fileName: string) => {
         if (!window.confirm(`Are you sure you want to delete "${fileName}"?`)) {
@@ -236,7 +144,7 @@ function DashboardContent() {
                 return;
             }
 
-            const response = await axios.delete(
+            const response = await axios.delete<ApiResponse>(
                 `${process.env.NEXT_PUBLIC_API_URL}/api/files/${fileId}`,
                 {
                     headers: {
@@ -245,14 +153,15 @@ function DashboardContent() {
                 }
             );
 
-            if (response.data.success) {
+            if (response.data && response.data.success) {
                 setFiles(prevFiles => prevFiles.filter(f => f._id !== fileId));
             } else {
                 setError('Failed to delete file. Please try again.');
             }
-        } catch (err: any) {
+        } catch (err: Error | unknown) {
             console.error('Error deleting file:', err);
-            if (err.response?.status === 401) {
+            const error = err as { response?: { status?: number } };
+            if (error.response?.status === 401) {
                 setError('Session expired. Please log in again.');
             } else {
                 setError('Failed to delete file. Please try again.');
@@ -288,7 +197,7 @@ function DashboardContent() {
                 return;
             }
 
-            const response = await axios.patch(
+            const response = await axios.patch<ApiResponse>(
                 `${process.env.NEXT_PUBLIC_API_URL}/api/files/${fileId}`,
                 { originalname: newName },
                 {
@@ -298,7 +207,7 @@ function DashboardContent() {
                 }
             );
 
-            if (response.data.success) {
+            if (response.data && response.data.success) {
                 setFiles(prevFiles =>
                     prevFiles.map(f =>
                         f._id === fileId ? { ...f, originalname: newName } : f
@@ -307,7 +216,7 @@ function DashboardContent() {
             } else {
                 setError('Failed to rename file. Please try again.');
             }
-        } catch (err: any) {
+        } catch (err: Error | unknown) {
             console.error('Error renaming file:', err);
             setError('Failed to rename file. Please try again.');
         }
@@ -337,7 +246,7 @@ function DashboardContent() {
 
     const handleMove = (fileId: string) => {
         // Placeholder for move functionality
-        console.log('Move file functionality not yet implemented');
+        console.log('Move file functionality not yet implemented for ID:', fileId);
     };
 
     return (

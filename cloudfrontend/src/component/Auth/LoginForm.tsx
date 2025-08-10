@@ -1,7 +1,8 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import Toast from '@/component/common/Toast';
 
@@ -9,22 +10,70 @@ export default function LoginForm() {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [isLoading, setIsLoading] = useState(false);
-    const [error, setError] = useState('');
-    const [success, setSuccess] = useState('');
+    // Removed unused error and success states
     const [rememberMe, setRememberMe] = useState(false);
     const [showToast, setShowToast] = useState(false);
     const [toastMessage, setToastMessage] = useState('');
     const [toastType, setToastType] = useState<'success' | 'error'>('success');
     const router = useRouter();
 
-    const showToastMessage = (message: string, type: 'success' | 'error') => {
+    const showToastMessage = useCallback((message: string, type: 'success' | 'error') => {
         setToastMessage(message);
         setToastType(type);
         setShowToast(true);
-    };
+    }, []);
 
     // Google Sign-In initialization
     useEffect(() => {
+        // Define handleGoogleResponse inside useEffect to avoid dependency issue
+        const handleGoogleResponse = async (response: Record<string, unknown>) => {
+            try {
+                setIsLoading(true);
+
+                if (!response.credential) {
+                    showToastMessage('Google authentication failed', 'error');
+                    setIsLoading(false);
+                    return;
+                }
+
+                // Send the Google token to your backend
+                const apiResponse = await fetch('https://cloudnestaibackend.onrender.com/api/auth/google', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        token: response.credential,
+                    }),
+                });
+
+                const data = await apiResponse.json();
+
+                if (apiResponse.ok && data.success && data.data?.token) {
+                    // Store the token and user session in localStorage
+                    const storage = rememberMe ? localStorage : sessionStorage;
+                    storage.setItem('authToken', data.data.token);
+                    storage.setItem('userSession', 'true');
+
+                    // Show success toast
+                    showToastMessage('Google login successful! Redirecting...', 'success');
+                    setIsLoading(false);
+
+                    // Redirect to dashboard after showing success message
+                    setTimeout(() => {
+                        router.push('/dashboard');
+                    }, 1500);
+                } else {
+                    showToastMessage(data.message || 'Google authentication failed', 'error');
+                    setIsLoading(false);
+                }
+            } catch (err) {
+                showToastMessage('Failed to authenticate with Google', 'error');
+                console.error('Google authentication error:', err);
+                setIsLoading(false);
+            }
+        };
+
         const initializeGoogleSignIn = () => {
             if (typeof window !== 'undefined' && window.google) {
                 window.google.accounts.id.initialize({
@@ -61,61 +110,12 @@ export default function LoginForm() {
             // Cleanup interval after 10 seconds
             setTimeout(() => clearInterval(checkGoogleLoaded), 10000);
         }
-    }, []);
-
-    const handleGoogleResponse = async (response: any) => {
-        try {
-            setIsLoading(true);
-
-            if (!response.credential) {
-                showToastMessage('Google authentication failed', 'error');
-                setIsLoading(false);
-                return;
-            }
-
-            // Send the Google token to your backend
-            const apiResponse = await fetch('https://cloudnestaibackend.onrender.com/api/auth/google', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    token: response.credential,
-                }),
-            });
-
-            const data = await apiResponse.json();
-
-            if (apiResponse.ok && data.success && data.data?.token) {
-                // Store the token and user session in localStorage
-                const storage = rememberMe ? localStorage : sessionStorage;
-                storage.setItem('authToken', data.data.token);
-                storage.setItem('userSession', 'true');
-
-                // Show success toast
-                showToastMessage('Google login successful! Redirecting...', 'success');
-                setIsLoading(false);
-
-                // Redirect to dashboard after showing success message
-                setTimeout(() => {
-                    router.push('/dashboard');
-                }, 1500);
-            } else {
-                showToastMessage(data.message || 'Google authentication failed', 'error');
-                setIsLoading(false);
-            }
-        } catch (err) {
-            showToastMessage('Failed to authenticate with Google', 'error');
-            console.error('Google authentication error:', err);
-            setIsLoading(false);
-        }
-    };
+    }, [rememberMe, router, showToastMessage]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setIsLoading(true);
-        setError('');
-        setSuccess('');
+        // Removed references to unused error and success states
 
         try {
             if (!email || !password) {
@@ -195,9 +195,11 @@ export default function LoginForm() {
             />
             <div className="bg-white p-8 rounded-lg shadow-md w-full max-w-md">
                 <div className="flex flex-col items-center mb-6">
-                    <img
+                    <Image
                         src="/cloudnest-logo.svg"
                         alt="CloudNest Logo"
+                        width={80}
+                        height={80}
                         className="h-20 w-20 mb-4"
                     />
                     <h2 className="text-2xl font-bold text-center text-gray-800">Login to CloudNest</h2>

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import axios from 'axios';
+import axios, { isAxiosError } from 'axios';
 
 interface DeleteResponse {
     success: boolean;
@@ -95,8 +95,12 @@ const DashboardFileCard: React.FC<DashboardFileCardProps> = ({
             } else {
                 setError(response.data.message);
             }
-        } catch (err: any) {
-            setError(err.response?.data?.message || 'Failed to delete file');
+        } catch (err: unknown) {
+            if (isAxiosError(err) && err.response) {
+                setError(err.response.data?.message || 'Failed to delete file');
+            } else {
+                setError('Failed to delete file');
+            }
         } finally {
             setIsDeleting(false);
         }

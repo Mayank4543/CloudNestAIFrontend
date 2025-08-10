@@ -1,16 +1,11 @@
 
 'use client';
 
-import React, { useState } from 'react';
-import { useRouter } from 'next/navigation';
-
-import Search from '@/component/Search/Search';
+import React from 'react';
 import Link from 'next/link';
 
 
 export default function Home() {
-  const [isSearchMode, setIsSearchMode] = useState(false);
-  const router = useRouter();
 
   return (
     <div className="font-['Inter',system-ui,sans-serif]">
@@ -26,7 +21,7 @@ export default function Home() {
                 Secure cloud storage for all your files
               </h1>
               <p className="text-lg text-gray-600 mb-8">
-                Store, share, and access your files from anywhere with CloudNest AI's
+                Store, share, and access your files from anywhere with CloudNest AI&apos;s
                 intelligent cloud storage solution. Experience the future of file management.
               </p>
               <div className="flex flex-col sm:flex-row gap-4">
@@ -220,7 +215,7 @@ export default function Home() {
                 </div>
               </div>
               <p className="text-gray-600">
-                "CloudNest AI has revolutionized how I manage my design files. The AI tagging is incredibly accurate, and I can find what I need in seconds."
+                &quot;CloudNest AI has revolutionized how I manage my design files. The AI tagging is incredibly accurate, and I can find what I need in seconds.&quot;
               </p>
               <div className="flex mt-4">
                 {[1, 2, 3, 4, 5].map((star) => (
@@ -242,7 +237,7 @@ export default function Home() {
                 </div>
               </div>
               <p className="text-gray-600">
-                "My team's productivity has increased by 30% since we switched to CloudNest AI. The insights feature helps us understand our content usage patterns."
+                &quot;My team&apos;s productivity has increased by 30% since we switched to CloudNest AI. The insights feature helps us understand our content usage patterns.&quot;
               </p>
               <div className="flex mt-4">
                 {[1, 2, 3, 4, 5].map((star) => (
@@ -264,7 +259,7 @@ export default function Home() {
                 </div>
               </div>
               <p className="text-gray-600">
-                "CloudNest AI's security features give me peace of mind. The interface is intuitive, and the customer support team is always helpful."
+                &quot;CloudNest AI&apos;s security features give me peace of mind. The interface is intuitive, and the customer support team is always helpful.&quot;
               </p>
               <div className="flex mt-4">
                 {[1, 2, 3, 4, 5].map((star) => (

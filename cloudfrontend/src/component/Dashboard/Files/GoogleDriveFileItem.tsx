@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { formatFileSize, formatDate, getFileType, getLocationPath } from '@/utils/api';
+import { formatFileSize, getFileType, getLocationPath } from '@/utils/api';
 import FileItemMenu from './FileItemMenu';
 
 interface FileData {

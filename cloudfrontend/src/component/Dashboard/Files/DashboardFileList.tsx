@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import axios, { isAxiosError } from 'axios';
 import DashboardFileCard from './DashboardFileCard';
 import Link from 'next/link';
 
@@ -76,8 +76,12 @@ const DashboardFileList: React.FC<DashboardFileListProps> = ({ onSearch }) => {
             } else {
                 setError(response.data.message);
             }
-        } catch (err: any) {
-            setError(err.response?.data?.message || 'Failed to fetch files');
+        } catch (err: unknown) {
+            if (isAxiosError(err) && err.response) {
+                setError(err.response.data?.message || 'Failed to fetch files');
+            } else {
+                setError('Failed to fetch files');
+            }
         } finally {
             setLoading(false);
         }

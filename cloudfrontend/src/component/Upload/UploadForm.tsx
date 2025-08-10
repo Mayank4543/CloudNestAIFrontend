@@ -3,23 +3,6 @@ import { api } from '@/utils/api';
 import { isAxiosError } from 'axios';
 import Toast from '@/component/common/Toast';
 
-interface UploadResponse {
-    success: boolean;
-    message: string;
-    data: {
-        id: string;
-        filename: string;
-        originalname: string;
-        mimetype: string;
-        size: number;
-        path: string;
-        url: string;
-        userId: string;
-        isPublic: boolean;
-        createdAt: string;
-        tags: string[];
-    };
-}
 
 const UploadForm: React.FC = () => {
     const [files, setFiles] = useState<FileList | null>(null);
@@ -96,13 +79,32 @@ const UploadForm: React.FC = () => {
             // Make API request with Authorization header
             const response = await api.files.upload(formData);
 
+            // Type guard for response data
+            interface UploadResponse {
+                success: boolean;
+                message?: string;
+                data?: {
+                    file?: {
+                        _id: string;
+                        filename: string;
+                        originalname: string;
+                        mimetype: string;
+                        size: number;
+                        path: string;
+                        userId: string;
+                    }
+                };
+            }
+
             // Handle successful response
-            if (response.data.success) {
+            const responseData = response.data as UploadResponse;
+
+            if (responseData.success) {
                 setUploadSuccess(true);
-                const successMsg = response.data.message || 'File uploaded successfully!';
+                const successMsg = responseData.message || 'File uploaded successfully!';
                 // setResponseMessage(successMsg);
                 showToastMessage(successMsg, 'success');
-                console.log('Upload response:', response.data);
+                console.log('Upload response:', responseData);
 
                 // Reset form
                 setFiles(null);
@@ -111,14 +113,15 @@ const UploadForm: React.FC = () => {
                 const form = e.target as HTMLFormElement;
                 form.reset();
             } else {
-                throw new Error(response.data.message || 'Upload failed');
+                throw new Error(responseData.message || 'Upload failed');
             }
         } catch (error: unknown) {
             setUploadSuccess(false);
             console.error('Upload failed:', error);
 
             if (isAxiosError(error)) {
-                const errorMsg = error.response?.data?.message || 'Network error occurred. Please try again.';
+                const errorResponse = error.response?.data as { message?: string } | undefined;
+                const errorMsg = errorResponse?.message || 'Network error occurred. Please try again.';
 
                 // Handle authentication errors specifically
                 if (error.response?.status === 401) {

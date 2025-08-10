@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import Image from 'next/image';
 import DashboardLayout from '@/component/Dashboard/Layout/DashboardLayout';
 import ProtectedRoute from '@/component/common/ProtectedRoute';
 
@@ -27,7 +28,7 @@ function ProfileContent() {
     const [profile, setProfile] = useState<UserProfile | null>(null);
     const [loading, setLoading] = useState<boolean>(true);
     const [error, setError] = useState<string | null>(null);
-    const [debugInfo, setDebugInfo] = useState<any>(null);
+    // Removed unused debugInfo state
 
     useEffect(() => {
         console.log('ProfileContent component mounted');
@@ -36,7 +37,8 @@ function ProfileContent() {
         const authToken = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
         const userSession = localStorage.getItem('userSession') || sessionStorage.getItem('userSession');
 
-        setDebugInfo({
+        // Debug information now logged instead of stored in state
+        console.log('Auth debug:', {
             hasAuthToken: !!authToken,
             hasUserSession: !!userSession,
             authTokenLength: authToken ? authToken.length : 0,
@@ -121,7 +123,8 @@ function ProfileContent() {
                 month: 'long',
                 day: 'numeric'
             });
-        } catch (error) {
+        } catch {
+            // No need for error parameter
             return 'Invalid date';
         }
     };
@@ -203,10 +206,13 @@ function ProfileContent() {
                         <div className="flex justify-center -mt-16 mb-4">
                             <div className="relative">
                                 {(profile.picture || profile.profilePicture) ? (
-                                    <img
-                                        src={getOptimizedImageUrl(profile.picture || profile.profilePicture)}
+                                    <Image
+                                        src={getOptimizedImageUrl(profile.picture || profile.profilePicture) || ''}
                                         alt={`${profile.name}'s profile`}
                                         className="w-24 h-24 rounded-full border-4 border-white shadow-lg object-cover"
+                                        width={96}
+                                        height={96}
+                                        priority
                                         crossOrigin="anonymous"
                                         referrerPolicy="no-referrer"
                                         onLoad={() => {

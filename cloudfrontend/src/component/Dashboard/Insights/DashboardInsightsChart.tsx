@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+// Remove unused axios import
 import {
     LineChart,
     Line,
@@ -24,7 +24,7 @@ export interface DataPoint {
     uploads?: number;
     downloads?: number;
     storageUsed?: number;
-    [key: string]: any; // Allow for additional metrics
+    [key: string]: string | number | undefined; // Allow for additional metrics with specific types
 }
 
 // File stats interfaces
@@ -63,45 +63,26 @@ const DashboardInsightsChart: React.FC<DashboardInsightsChartProps> = ({
         grid: isDarkMode ? '#374151' : '#e5e7eb',
     };
 
-    const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#82ca9d', '#ffc658', '#ff7300'];
-
-    useEffect(() => {
-        const fetchData = async () => {
-            setLoading(true);
-            setError(null);
-
-            try {
-                // For a real app, we'd fetch this data from the backend
-                // For now, generate mock data for demonstration
-                generateMockData();
-            } catch (err: any) {
-                setError(err.message || 'Failed to fetch analytics data');
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        fetchData();
-    }, [timeRange]);
-
+    // Move COLORS inside useCallback to fix the dependency warning
     // Mock data generation for demo purposes
-    const generateMockData = () => {
+    const generateMockData = React.useCallback(() => {
+        const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#82ca9d', '#ffc658', '#ff7300'];
         // Generate activity data (uploads, downloads over time)
         const mockActivityData: DataPoint[] = [];
         const days = timeRange === '7d' ? 7 : timeRange === '30d' ? 30 : timeRange === '90d' ? 90 : 365;
-        
-        let date = new Date();
+
+        const date = new Date();
         date.setDate(date.getDate() - days);
-        
+
         for (let i = 0; i <= days; i++) {
             const currentDate = new Date(date);
             currentDate.setDate(currentDate.getDate() + i);
-            
+
             const dateStr = currentDate.toISOString().split('T')[0];
             const uploads = Math.floor(Math.random() * 10) + 1;
             const downloads = Math.floor(Math.random() * 15) + 1;
             const storageUsed = Math.floor(Math.random() * 100) + 50; // MB
-            
+
             mockActivityData.push({
                 date: dateStr,
                 uploads,
@@ -109,9 +90,9 @@ const DashboardInsightsChart: React.FC<DashboardInsightsChartProps> = ({
                 storageUsed
             });
         }
-        
+
         setActivityData(mockActivityData);
-        
+
         // Generate file type distribution
         const fileTypes = [
             { type: 'Images', count: Math.floor(Math.random() * 100) + 20, color: COLORS[0] },
@@ -121,22 +102,52 @@ const DashboardInsightsChart: React.FC<DashboardInsightsChartProps> = ({
             { type: 'Archives', count: Math.floor(Math.random() * 40) + 15, color: COLORS[4] },
             { type: 'Others', count: Math.floor(Math.random() * 20) + 5, color: COLORS[5] },
         ];
-        
+
         setFileTypeData(fileTypes);
-    };
+    }, [timeRange]);
+
+    // Add useEffect to fetch data
+    useEffect(() => {
+        const fetchData = async () => {
+            setLoading(true);
+            setError(null);
+
+            try {
+                // For a real app, we'd fetch this data from the backend
+                // For now, generate mock data for demonstration
+                generateMockData();
+            } catch (err) {
+                setError(err instanceof Error ? err.message : 'Failed to fetch analytics data');
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchData();
+    }, [timeRange, generateMockData]);
 
     // Calculate total files
     const totalFiles = fileTypeData.reduce((sum, item) => sum + item.count, 0);
 
     // Custom tooltip formatter for recharts
-    const CustomTooltip = ({ active, payload, label }: any) => {
+    interface TooltipProps {
+        active?: boolean;
+        payload?: Array<{
+            name: string;
+            value: number | string;
+            color: string;
+        }>;
+        label?: string;
+    }
+
+    const CustomTooltip = ({ active, payload, label }: TooltipProps) => {
         if (active && payload && payload.length) {
             return (
                 <div className={`p-3 border ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} rounded shadow-sm`}>
                     <p className={`text-sm font-medium ${isDarkMode ? 'text-gray-200' : 'text-gray-900'}`}>
                         {label}
                     </p>
-                    {payload.map((entry: any, index: number) => (
+                    {payload.map((entry, index: number) => (
                         <p key={`item-${index}`} className="text-sm" style={{ color: entry.color }}>
                             {entry.name}: {entry.value}
                         </p>
@@ -183,11 +194,11 @@ const DashboardInsightsChart: React.FC<DashboardInsightsChartProps> = ({
                     <div className="flex mt-4 sm:mt-0 space-x-2">
                         <select
                             value={timeRange}
-                            onChange={(e) => setTimeRange(e.target.value as any)}
-                            className={`text-sm rounded-md border ${isDarkMode 
-                                ? 'bg-gray-700 border-gray-600 text-white' 
+                            onChange={(e) => setTimeRange(e.target.value as '7d' | '30d' | '90d' | '1y')}
+                            className={`text-sm rounded-md border ${isDarkMode
+                                ? 'bg-gray-700 border-gray-600 text-white'
                                 : 'bg-white border-gray-300 text-gray-700'
-                            } py-1 px-3 focus:outline-none focus:ring-2 focus:ring-[#18b26f] focus:border-transparent`}
+                                } py-1 px-3 focus:outline-none focus:ring-2 focus:ring-[#18b26f] focus:border-transparent`}
                         >
                             <option value="7d">Last 7 days</option>
                             <option value="30d">Last 30 days</option>
@@ -200,28 +211,28 @@ const DashboardInsightsChart: React.FC<DashboardInsightsChartProps> = ({
                 {/* Chart Type Selector */}
                 <div className="flex border-b mb-6 overflow-x-auto scrollbar-hide">
                     <button
-                        className={`px-4 py-2 text-sm font-medium ${selectedChart === 'activity' 
+                        className={`px-4 py-2 text-sm font-medium ${selectedChart === 'activity'
                             ? `border-b-2 border-[#18b26f] ${isDarkMode ? 'text-[#4ade80]' : 'text-[#18b26f]'}`
                             : `${isDarkMode ? 'text-gray-400 hover:text-gray-300' : 'text-gray-500 hover:text-gray-700'}`
-                        }`}
+                            }`}
                         onClick={() => setSelectedChart('activity')}
                     >
                         Activity
                     </button>
                     <button
-                        className={`px-4 py-2 text-sm font-medium ${selectedChart === 'storage' 
+                        className={`px-4 py-2 text-sm font-medium ${selectedChart === 'storage'
                             ? `border-b-2 border-[#18b26f] ${isDarkMode ? 'text-[#4ade80]' : 'text-[#18b26f]'}`
                             : `${isDarkMode ? 'text-gray-400 hover:text-gray-300' : 'text-gray-500 hover:text-gray-700'}`
-                        }`}
+                            }`}
                         onClick={() => setSelectedChart('storage')}
                     >
                         Storage
                     </button>
                     <button
-                        className={`px-4 py-2 text-sm font-medium ${selectedChart === 'filetypes' 
+                        className={`px-4 py-2 text-sm font-medium ${selectedChart === 'filetypes'
                             ? `border-b-2 border-[#18b26f] ${isDarkMode ? 'text-[#4ade80]' : 'text-[#18b26f]'}`
                             : `${isDarkMode ? 'text-gray-400 hover:text-gray-300' : 'text-gray-500 hover:text-gray-700'}`
-                        }`}
+                            }`}
                         onClick={() => setSelectedChart('filetypes')}
                     >
                         File Types
@@ -242,8 +253,8 @@ const DashboardInsightsChart: React.FC<DashboardInsightsChartProps> = ({
                                 }}
                             >
                                 <CartesianGrid strokeDasharray="3 3" stroke={chartColors.grid} />
-                                <XAxis 
-                                    dataKey="date" 
+                                <XAxis
+                                    dataKey="date"
                                     stroke={chartColors.text}
                                     tickFormatter={formatXAxis}
                                     tick={{ fontSize: 12 }}
@@ -286,21 +297,21 @@ const DashboardInsightsChart: React.FC<DashboardInsightsChartProps> = ({
                                 }}
                             >
                                 <CartesianGrid strokeDasharray="3 3" stroke={chartColors.grid} />
-                                <XAxis 
-                                    dataKey="date" 
+                                <XAxis
+                                    dataKey="date"
                                     stroke={chartColors.text}
                                     tickFormatter={formatXAxis}
                                     tick={{ fontSize: 12 }}
                                 />
-                                <YAxis 
-                                    stroke={chartColors.text} 
-                                    tick={{ fontSize: 12 }} 
-                                    label={{ 
-                                        value: 'Storage Used (MB)', 
-                                        angle: -90, 
+                                <YAxis
+                                    stroke={chartColors.text}
+                                    tick={{ fontSize: 12 }}
+                                    label={{
+                                        value: 'Storage Used (MB)',
+                                        angle: -90,
                                         position: 'insideLeft',
                                         style: { fill: chartColors.text, fontSize: '12px' }
-                                    }} 
+                                    }}
                                 />
                                 <Tooltip content={<CustomTooltip />} />
                                 <Legend verticalAlign="top" height={36} />
@@ -341,7 +352,7 @@ const DashboardInsightsChart: React.FC<DashboardInsightsChartProps> = ({
                                         fill="#8884d8"
                                         dataKey="count"
                                         nameKey="type"
-                                        // label={({ name, percent }) => `${name} ${(`${percent}` * 100).toFixed(0)}%`}
+                                    // label={({ name, percent }) => `${name} ${(`${percent}` * 100).toFixed(0)}%`}
                                     >
                                         {fileTypeData.map((entry, index) => (
                                             <Cell key={`cell-${index}`} fill={entry.color} />

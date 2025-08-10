@@ -2,6 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 
 const NavBar: React.FC = () => {
@@ -18,10 +19,13 @@ const NavBar: React.FC = () => {
                 <div className="flex justify-between h-16">
                     <div className="flex items-center">
                         <Link href="/" className="flex-shrink-0 flex items-center">
-                            <img
+                            <Image
                                 src="/cloudnest-logo.svg"
                                 alt="CloudNest Logo"
-                                className="h-10 w-10 mr-2"
+                                className="mr-2"
+                                width={40}
+                                height={40}
+                                priority
                             />
                             <span className="text-xl font-bold text-[#18b26f]">CloudNest</span>
                         </Link>

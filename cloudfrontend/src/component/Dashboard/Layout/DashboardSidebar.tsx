@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 
 interface DashboardSidebarProps {
@@ -128,9 +129,11 @@ const DashboardSidebar: React.FC<DashboardSidebarProps> = ({ isOpen }) => {
                 <div className="p-4 border-t border-gray-200">
                     <div className="flex items-center">
                         {(userProfile?.picture || userProfile?.profilePicture) ? (
-                            <img
-                                src={userProfile?.picture || userProfile?.profilePicture}
+                            <Image
+                                src={userProfile?.picture || userProfile?.profilePicture || ''}
                                 alt={`${userProfile.name}'s profile`}
+                                width={36}
+                                height={36}
                                 className="h-9 w-9 rounded-full object-cover"
                                 onError={(e) => {
                                     const target = e.target as HTMLImageElement;

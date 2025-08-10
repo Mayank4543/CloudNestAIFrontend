@@ -1,5 +1,5 @@
 import React from 'react';
-import { formatFileSize, formatDate, getFileType, getLocationPath } from '@/utils/api';
+import { formatFileSize, getFileType, getLocationPath } from '@/utils/api';
 
 interface FileData {
     _id: string;
@@ -115,7 +115,7 @@ const formatDateFull = (dateString: string): string => {
     });
 };
 
-const FileCardListView: React.FC<FileCardProps> = ({ file, onDownload, onDelete }) => {
+const FileCardListView: React.FC<FileCardProps> = ({ file,onDownload, onDelete }) => {
     return (
         <tr className="hover:bg-gray-50 transition-colors">
             <td className="px-6 py-4 whitespace-nowrap">

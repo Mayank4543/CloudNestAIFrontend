@@ -1,4 +1,4 @@
-import axios, { AxiosRequestConfig, AxiosResponse } from 'axios';
+import axios from 'axios';
 
 // Get the API base URL from environment variables
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://cloudnestaibackend.onrender.com';
@@ -30,7 +30,7 @@ apiClient.interceptors.request.use(
 
 // Response interceptor to handle common errors
 apiClient.interceptors.response.use(
-    (response: AxiosResponse) => {
+    (response) => {
         return response;
     },
     (error) => {
@@ -92,7 +92,7 @@ export const api = {
 
     // User operations
     user: {
-        updateProfile: (userData: any) =>
+        updateProfile: (userData: Record<string, unknown>) =>
             apiClient.put('/api/user/profile', userData),
 
         changePassword: (passwordData: { currentPassword: string; newPassword: string }) =>

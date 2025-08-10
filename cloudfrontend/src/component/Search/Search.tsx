@@ -1,7 +1,7 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useCallback } from 'react';
 import axios from 'axios';
 import SearchBar from './SearchBar';
-import FileCard from '../File/filecard';
+import FileCardListView from '../Dashboard/Files/FileCard';
 
 interface FileData {
     _id: string;
@@ -10,9 +10,16 @@ interface FileData {
     mimetype: string;
     size: number;
     path: string;
+    userId: string;
+    isPublic: boolean;
     tags: string[];
     createdAt: string;
     updatedAt: string;
+    url?: string;
+    owner?: {
+        name: string;
+        email: string;
+    };
 }
 
 interface SearchResponse {
@@ -29,9 +36,9 @@ const Search: React.FC = () => {
     const [searchQuery, setSearchQuery] = useState<string>('');
 
     // Debounce the search to avoid too many API calls
-    const debounce = (func: Function, delay: number) => {
+    const debounce = <T extends (...args: string[]) => void>(func: T, delay: number) => {
         let timeoutId: NodeJS.Timeout;
-        return function (...args: any[]) {
+        return function (...args: Parameters<T>) {
             clearTimeout(timeoutId);
             timeoutId = setTimeout(() => {
                 func(...args);
@@ -39,8 +46,8 @@ const Search: React.FC = () => {
         };
     };
 
-    // Format date to a readable format
-    const formatDate = (dateString: string): string => {
+    // Format date to a readable format (keeping for future use)
+    const _formatDate = (dateString: string): string => {
         const date = new Date(dateString);
         return date.toLocaleDateString('en-US', {
             year: 'numeric',
@@ -49,8 +56,8 @@ const Search: React.FC = () => {
         });
     };
 
-    // Function to get file type from mimetype
-    const getFileType = (mimetype: string): string => {
+    // Function to get file type from mimetype (keeping for future use)
+    const _getFileType = (mimetype: string): string => {
         const parts = mimetype.split('/');
         if (parts.length > 1) {
             return parts[1].toUpperCase();
@@ -97,12 +104,12 @@ const Search: React.FC = () => {
     }, []);
 
     // Debounced search function
-    const debouncedSearch = useCallback(
-        debounce((query: string) => {
-            searchFiles(query);
-        }, 500),
-        [searchFiles]
-    );
+    const debouncedSearch = useCallback((query: string) => {
+        const debouncedFn = debounce((searchQuery: string) => {
+            searchFiles(searchQuery);
+        }, 500);
+        debouncedFn(query);
+    }, [searchFiles]);
 
     // Handle search input
     const handleSearch = (searchTerm: string) => {
@@ -145,7 +152,7 @@ const Search: React.FC = () => {
                     <svg className="w-16 h-16 text-gray-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
                     </svg>
-                    <p className="text-gray-500 text-lg">No files found for "{searchQuery}"</p>
+                    <p className="text-gray-500 text-lg">No files found for &quot;{searchQuery}&quot;</p>
                     <p className="text-gray-400 text-sm mt-2">Try different keywords or check your spelling</p>
                 </div>
             )}
@@ -161,14 +168,13 @@ const Search: React.FC = () => {
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                         {searchResults.map((file) => (
-                            <FileCard
+                            <FileCardListView
                                 key={file._id}
-                                fileId={file._id}
-                                fileName={file.originalname}
-                                fileType={getFileType(file.mimetype)}
-                                fileSize={file.size}
-                                uploadedAt={formatDate(file.createdAt)}
-                                tags={file.tags}
+                                file={file}
+                                onDownload={(fileId, fileName) => {
+                                    // Handle download logic
+                                    console.log(`Downloading ${fileName}`);
+                                }}
                                 onDelete={handleFileDelete}
                             />
                         ))}

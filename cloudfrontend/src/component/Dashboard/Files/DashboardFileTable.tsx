@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { formatFileSize, formatDate, getFileType, getLocationPath } from '@/utils/api';
+import { formatFileSize, getLocationPath } from '@/utils/api';
 import ShareModal from './ShareModal';
 
 interface FileData {
@@ -27,9 +27,9 @@ interface DashboardFileTableProps {
     onDelete: (fileId: string, fileName: string) => void;
     onRename: (fileId: string, newName: string) => void;
     onCopy: (fileId: string) => void;
-    onShare: (fileId: string) => void;
     onPreview: (file: FileData) => void;
-    onMove: (fileId: string) => void;
+    onShare: (fileId: string) => void;
+    onMove: (fileId: string, destinationFolderId: string) => void;
 }
 
 const DashboardFileTable: React.FC<DashboardFileTableProps> = ({
@@ -38,8 +38,8 @@ const DashboardFileTable: React.FC<DashboardFileTableProps> = ({
     onDelete,
     onRename,
     onCopy,
-    onShare,
     onPreview,
+    onShare,
     onMove
 }) => {
     const [hoveredRow, setHoveredRow] = useState<string | null>(null);
@@ -146,6 +146,14 @@ const DashboardFileTable: React.FC<DashboardFileTableProps> = ({
     // State for share modal
     const [shareModalOpen, setShareModalOpen] = useState(false);
     const [activeFile, setActiveFile] = useState<FileData | null>(null);
+
+    // Function to handle moving a file
+    const handleMoveFile = (fileId: string) => {
+        const destinationFolder = prompt("Enter destination folder ID:");
+        if (destinationFolder) {
+            onMove(fileId, destinationFolder);
+        }
+    };
 
     // Dropdown menu component
     const DropdownMenu = ({ file }: { file: FileData }) => {
@@ -280,6 +288,8 @@ const DashboardFileTable: React.FC<DashboardFileTableProps> = ({
                                 // Set active file and open share modal
                                 setActiveFile(file);
                                 setShareModalOpen(true);
+                                // Call the onShare function
+                                onShare(file._id);
                                 setActiveDropdown(null);
                                 setActiveShareSubmenu(null);
                             }}
@@ -321,7 +331,24 @@ const DashboardFileTable: React.FC<DashboardFileTableProps> = ({
                 </div>
 
                 {/* Divider */}
-                <div className="border-t border-gray-100 my-1"></div>                {/* Move to trash option */}
+                <div className="border-t border-gray-100 my-1"></div>
+
+                {/* Move to folder option */}
+                <button
+                    onClick={() => {
+                        handleMoveFile(file._id);
+                        setActiveDropdown(null);
+                        setActiveShareSubmenu(null);
+                    }}
+                    className="flex items-center w-full px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-100"
+                >
+                    <svg className="w-4 h-4 mr-3 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 19a2 2 0 01-2-2V7a2 2 0 012-2h4l2 2h4a2 2 0 012 2v1M5 19h14a2 2 0 002-2v-5a2 2 0 00-2-2H9a2 2 0 00-2 2v5a2 2 0 01-2 2z" />
+                    </svg>
+                    <span className="font-medium">Move to folder</span>
+                </button>
+
+                {/* Move to trash option */}
                 <button
                     onClick={() => {
                         onDelete(file._id, file.originalname);

@@ -4,6 +4,33 @@ import axios from 'axios';
 // Use environment variable or fallback to the hard-coded URL
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://cloudnestaibackend.onrender.com';
 
+// Define interface for API response
+interface FileApiResponse {
+    success: boolean;
+    message?: string;
+    data?: {
+        _id: string;
+        filename: string;
+        originalname: string;
+        isPublic: boolean;
+        url?: string;
+        mimetype?: string;
+        [key: string]: unknown;
+    };
+}
+
+// Define interface for error response
+interface ApiError {
+    response?: {
+        data: unknown;
+        status: number;
+        headers: Record<string, string>;
+    };
+    request?: unknown;
+    message?: string;
+    [key: string]: unknown;
+}
+
 interface ShareModalProps {
     fileId: string;
     isOpen: boolean;
@@ -72,7 +99,6 @@ const ShareModal: React.FC<ShareModalProps> = ({
     const [isLoading, setIsLoading] = useState(false);
     const [showAccessOptions, setShowAccessOptions] = useState(false);
     const accessOptionsRef = useRef<HTMLDivElement>(null);
-    const [fileType, setFileType] = useState<string>('');
     const [toastMessage, setToastMessage] = useState<string>('Link copied');
     const [userData, setUserData] = useState({ name: userName, email: userEmail });
 
@@ -198,7 +224,7 @@ const ShareModal: React.FC<ShareModalProps> = ({
             });
 
             // Safely handle the response with proper type checking
-            const responseData: any = response.data;
+            const responseData = response.data as FileApiResponse;
 
             // Check if response is successful
             if (responseData && responseData.success === true) {
@@ -228,39 +254,40 @@ const ShareModal: React.FC<ShareModalProps> = ({
             }
 
             setShowAccessOptions(false);
-        } catch (error: any) {
+        } catch (error) {
             console.error('Error updating file access:', error);
+            const err = error as ApiError;
 
             // More detailed error logging
-            if (error.response) {
+            if (err.response) {
                 // The request was made and the server responded with a non-2xx status
-                console.error('Response data:', error.response.data);
-                console.error('Response status:', error.response.status);
-                console.error('Response headers:', error.response.headers);
+                console.error('Response data:', err.response.data);
+                console.error('Response status:', err.response.status);
+                console.error('Response headers:', err.response.headers);
 
-                if (error.response.status === 401) {
+                if (err.response.status === 401) {
                     console.warn('Authentication issue. Please check your login status.');
 
                     // Try to get the token again in case it changed
                     const freshToken = getAuthToken();
                     console.log('Fresh token check:', freshToken ? 'Token found' : 'No token found');
                 }
-            } else if (error.request) {
+            } else if (err.request) {
                 // The request was made but no response was received
-                console.error('No response received:', error.request);
+                console.error('No response received:', err.request);
             } else {
                 // Something happened in setting up the request
-                console.error('Request setup error:', error.message);
+                console.error('Request setup error:', err.message);
             }
 
             // Revert on error
             setIsPublic(!makePublic);
 
             // Show appropriate error message based on error type
-            if (error.response && error.response.status === 401) {
+            if (err.response && err.response.status === 401) {
                 alert('Authentication error. Please try logging out and logging in again.');
-            } else if (error.response) {
-                alert(`Error: ${error.response.data.message || 'Failed to update access settings. Please try again.'}`);
+            } else if (err.response) {
+                alert(`Error: ${(err.response.data as { message?: string })?.message || 'Failed to update access settings. Please try again.'}`);
             } else {
                 alert('Failed to update access settings. Please try again.');
             }
@@ -295,14 +322,19 @@ const ShareModal: React.FC<ShareModalProps> = ({
             );
 
             // Extract the file data from the response
-            const responseData: any = response.data;
+            const responseData = response.data as FileApiResponse;
 
-            if (!responseData || (!responseData.data && !responseData.filename)) {
+            if (!responseData || (!responseData.data && !(responseData as { filename?: string }).filename)) {
                 throw new Error('Invalid file data received');
             }
 
             // Extract file data, handling both response formats
-            const fileData = responseData.data || responseData;
+            const fileData = responseData.data || responseData as unknown as {
+                filename?: string;
+                originalname?: string;
+                mimetype?: string;
+                isPublic?: boolean;
+            };
 
             // Get file details
             const filename = fileData.filename || fileData.originalname || 'unknown_file';
@@ -314,7 +346,7 @@ const ShareModal: React.FC<ShareModalProps> = ({
 
             // IMPORTANT: To avoid CORS issues, we'll use the backend's proxy endpoints
             // instead of directly accessing R2 storage URLs
-            
+
             if (isFilePublic) {
                 // For public files, use a backend proxy URL that will handle the file retrieval
                 // This will avoid CORS issues with direct R2 access
@@ -324,12 +356,10 @@ const ShareModal: React.FC<ShareModalProps> = ({
                 // This ensures proper auth checks and avoids CORS issues
                 const frontendHost = window.location.origin;
                 link = `${frontendHost}/api/proxy/files/${fileId}`;
-                
+
                 // Alternatively, use a backend endpoint that requires authentication
                 // link = `${API_BASE_URL}/api/files/secure-view/${fileId}`;
             }
-
-            setFileType(mimetype);
 
             // Special handling for PowerPoint files
             if (mimetype.includes('presentation') ||

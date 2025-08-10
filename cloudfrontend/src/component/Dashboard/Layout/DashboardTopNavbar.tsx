@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 
 interface DashboardTopNavbarProps {
@@ -195,9 +196,11 @@ const DashboardTopNavbar: React.FC<DashboardTopNavbarProps> = ({ onMenuButtonCli
                                 >
                                     <span className="sr-only">Open user menu</span>
                                     {(userProfile?.picture || userProfile?.profilePicture) ? (
-                                        <img
-                                            src={getOptimizedImageUrl(userProfile?.picture || userProfile?.profilePicture)}
+                                        <Image
+                                            src={getOptimizedImageUrl(userProfile?.picture || userProfile?.profilePicture) || ''}
                                             alt={`${userProfile.name}'s profile`}
+                                            width={36}
+                                            height={36}
                                             className="h-9 w-9 rounded-full object-cover"
                                             crossOrigin="anonymous"
                                             referrerPolicy="no-referrer"

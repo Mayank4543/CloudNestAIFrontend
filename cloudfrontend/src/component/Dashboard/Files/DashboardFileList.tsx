@@ -60,7 +60,7 @@ const DashboardFileList: React.FC<DashboardFileListProps> = ({ onSearch }) => {
         setLoading(true);
         setError(null);
         try {
-            const response = await axios.get<ApiResponse>(`http://localhost:5000/api/files`, {
+            const response = await axios.get<ApiResponse>(`https://cloudnestaibackend.onrender.com/api/files`, {
                 params: {
                     page,
                     limit: pagination.limit,
@@ -305,7 +305,7 @@ const DashboardFileList: React.FC<DashboardFileListProps> = ({ onSearch }) => {
                                                     key={pageNum}
                                                     onClick={() => handlePageChange(pageNum)}
                                                     className={`relative inline-flex items-center px-4 py-2 text-sm font-semibold ${pagination.currentPage === pageNum
-                                                        ? 'z-10 bg-[#18b26f] text-white focus:z-20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#18b26f]'
+                                                        ? 'z-10 bg-[#18b26f] text-white focus:z-20  focus-visible:outline-offset-2 focus-visible:outline-[#18b26f]'
                                                         : 'text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0'
                                                         }`}
                                                 >

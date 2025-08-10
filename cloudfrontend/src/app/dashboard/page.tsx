@@ -3,6 +3,8 @@
 import React, { useState, useEffect } from 'react';
 import DashboardLayout from '@/component/Dashboard/Layout/DashboardLayout';
 import ProtectedRoute from '@/component/common/ProtectedRoute';
+import GoogleDriveFileItem from '@/component/Dashboard/Files/GoogleDriveFileItem';
+import DashboardFileTable from '@/component/Dashboard/Files/DashboardFileTable';
 import axios from 'axios';
 
 interface FileData {
@@ -12,9 +14,16 @@ interface FileData {
     mimetype: string;
     size: number;
     path: string;
+    userId: string;
+    isPublic: boolean;
     tags: string[];
     createdAt: string;
     updatedAt: string;
+    url?: string;
+    owner?: {
+        name: string;
+        email: string;
+    };
 }
 
 interface PaginationData {
@@ -38,12 +47,33 @@ function DashboardContent() {
     const [loading, setLoading] = useState<boolean>(true);
     const [error, setError] = useState<string | null>(null);
     const [pagination, setPagination] = useState<PaginationData | null>(null);
+    const [viewMode, setViewMode] = useState<'list' | 'grid'>('list');
+    const [searchTerm, setSearchTerm] = useState<string>('');
+    const [sortBy, setSortBy] = useState<'name' | 'date' | 'size'>('date');
+    const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
 
     useEffect(() => {
         const fetchFiles = async () => {
             try {
                 setLoading(true);
-                const response = await axios.get<ApiResponse>('https://cloudnestaibackend.onrender.com/api/files');
+                setError(null);
+
+                // Get authentication token
+                const authToken = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
+
+                if (!authToken) {
+                    setError('Authentication required. Please log in first.');
+                    return;
+                }
+
+                const response = await axios.get<ApiResponse>(
+                    `${process.env.NEXT_PUBLIC_API_URL}/api/files/`,
+                    {
+                        headers: {
+                            'Authorization': `Bearer ${authToken}`,
+                        },
+                    }
+                );
 
                 if (response.data.success) {
                     setFiles(response.data.data);
@@ -51,9 +81,13 @@ function DashboardContent() {
                 } else {
                     setError(response.data.message || 'Failed to fetch files');
                 }
-            } catch (err) {
+            } catch (err: any) {
                 console.error('Error fetching files:', err);
-                setError('An error occurred while fetching files. Please try again later.');
+                if (err.response?.status === 401) {
+                    setError('Session expired. Please log in again.');
+                } else {
+                    setError('An error occurred while fetching files. Please try again later.');
+                }
             } finally {
                 setLoading(false);
             }
@@ -71,178 +105,425 @@ function DashboardContent() {
         return (totalBytes / 1073741824).toFixed(2) + " GB";
     };
 
+    // Filter and sort files
+    const filteredAndSortedFiles = files
+        .filter(file =>
+            file.originalname.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            file.tags.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase()))
+        )
+        .sort((a, b) => {
+            let comparison = 0;
+            switch (sortBy) {
+                case 'name':
+                    comparison = a.originalname.localeCompare(b.originalname);
+                    break;
+                case 'date':
+                    comparison = new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+                    break;
+                case 'size':
+                    comparison = a.size - b.size;
+                    break;
+            }
+            return sortOrder === 'asc' ? comparison : -comparison;
+        });
+
+    // Helper functions
+    const formatFileSize = (bytes: number): string => {
+        if (bytes < 1024) return bytes + ' B';
+        else if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB';
+        else if (bytes < 1073741824) return (bytes / 1048576).toFixed(1) + ' MB';
+        else return (bytes / 1073741824).toFixed(1) + ' GB';
+    };
+
+    const getFileType = (mimetype: string): string => {
+        const parts = mimetype.split('/');
+        if (parts.length > 1) {
+            return parts[1].toUpperCase();
+        }
+        return parts[0].toUpperCase();
+    };
+
+    const formatDate = (dateString: string): string => {
+        const date = new Date(dateString);
+        return date.toLocaleDateString('en-US', {
+            month: 'short',
+            day: 'numeric',
+            hour: 'numeric',
+            minute: '2-digit'
+        });
+    };
+
+    const formatFullDate = (dateString: string): string => {
+        const date = new Date(dateString);
+        return date.toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+    };
+
+    const getFileIcon = (mimetype: string) => {
+        if (mimetype.includes('image')) {
+            return (
+                <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clipRule="evenodd" />
+                </svg>
+            );
+        } else if (mimetype.includes('pdf')) {
+            return (
+                <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clipRule="evenodd" />
+                </svg>
+            );
+        } else if (mimetype.includes('text') || mimetype.includes('document')) {
+            return (
+                <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M4 4a2 2 0 012-2h8a2 2 0 012 2v12a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 2v1h8V6H6zm0 3v1h8V9H6zm0 3v1h5v-1H6z" clipRule="evenodd" />
+                </svg>
+            );
+        } else {
+            return (
+                <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M4 4a2 2 0 012-2h8a2 2 0 012 2v12a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clipRule="evenodd" />
+                </svg>
+            );
+        }
+    };
+
+    const getLocationPath = (path: string): string => {
+        // Extract meaningful location from path
+        const pathParts = path.split('/');
+        if (pathParts.length > 3) {
+            return `/${pathParts[pathParts.length - 2]}/`;
+        }
+        return '/uploads/';
+    };
+
+    const getPrivacyBadge = (isPublic: boolean) => {
+        if (isPublic) {
+            return (
+                <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                    <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM4.332 8.027a6.012 6.012 0 011.912-2.706C6.512 5.73 6.974 6 7.5 6A1.5 1.5 0 019 7.5V8a2 2 0 004 0 2 2 0 011.523-1.943A5.977 5.977 0 0116 10c0 3.314-2.686 6-6 6s-6-2.686-6-6a5.99 5.99 0 01.332-2.027z" clipRule="evenodd" />
+                    </svg>
+                    Public
+                </span>
+            );
+        } else {
+            return (
+                <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                    <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
+                    </svg>
+                    Private
+                </span>
+            );
+        }
+    };
+
+    const handleDelete = async (fileId: string, fileName: string) => {
+        if (!window.confirm(`Are you sure you want to delete "${fileName}"?`)) {
+            return;
+        }
+
+        try {
+            const authToken = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
+
+            if (!authToken) {
+                setError('Authentication required. Please log in first.');
+                return;
+            }
+
+            const response = await axios.delete(
+                `${process.env.NEXT_PUBLIC_API_URL}/api/files/${fileId}`,
+                {
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`,
+                    },
+                }
+            );
+
+            if (response.data.success) {
+                setFiles(prevFiles => prevFiles.filter(f => f._id !== fileId));
+            } else {
+                setError('Failed to delete file. Please try again.');
+            }
+        } catch (err: any) {
+            console.error('Error deleting file:', err);
+            if (err.response?.status === 401) {
+                setError('Session expired. Please log in again.');
+            } else {
+                setError('Failed to delete file. Please try again.');
+            }
+        }
+    };
+
+    const handleDownload = (fileId: string, fileName: string) => {
+        const authToken = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
+
+        if (!authToken) {
+            setError('Authentication required. Please log in first.');
+            return;
+        }
+
+        // Create a temporary link to download the file
+        const downloadUrl = `${process.env.NEXT_PUBLIC_API_URL}/api/files/download/${fileId}`;
+        const link = document.createElement('a');
+        link.href = downloadUrl;
+        link.download = fileName;
+        link.style.display = 'none';
+
+        // Add authorization header by opening in new window
+        window.open(downloadUrl, '_blank');
+    };
+
+    const handleRename = async (fileId: string, newName: string) => {
+        try {
+            const authToken = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
+
+            if (!authToken) {
+                setError('Authentication required. Please log in first.');
+                return;
+            }
+
+            const response = await axios.patch(
+                `${process.env.NEXT_PUBLIC_API_URL}/api/files/${fileId}`,
+                { originalname: newName },
+                {
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`,
+                    },
+                }
+            );
+
+            if (response.data.success) {
+                setFiles(prevFiles =>
+                    prevFiles.map(f =>
+                        f._id === fileId ? { ...f, originalname: newName } : f
+                    )
+                );
+            } else {
+                setError('Failed to rename file. Please try again.');
+            }
+        } catch (err: any) {
+            console.error('Error renaming file:', err);
+            setError('Failed to rename file. Please try again.');
+        }
+    };
+
+    const handleCopy = (fileId: string) => {
+        // Copy file URL to clipboard
+        const fileUrl = `${window.location.origin}/file/${fileId}`;
+        navigator.clipboard.writeText(fileUrl).then(() => {
+            console.log('File URL copied to clipboard');
+        });
+    };
+
+    const handleShare = (fileId: string) => {
+        // For now, just copy the shareable URL
+        const shareUrl = `${window.location.origin}/file/${fileId}`;
+        navigator.clipboard.writeText(shareUrl).then(() => {
+            console.log('Share URL copied to clipboard');
+        });
+    };
+
+    const handlePreview = (file: FileData) => {
+        // Open file in new tab for preview
+        const previewUrl = `${process.env.NEXT_PUBLIC_API_URL}/api/files/download/${file._id}`;
+        window.open(previewUrl, '_blank');
+    };
+
+    const handleMove = (fileId: string) => {
+        // Placeholder for move functionality
+        console.log('Move file functionality not yet implemented');
+    };
+
     return (
         <DashboardLayout>
             <div className="p-6">
-                {/* Header with summary info */}
-                <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6">
+                {/* Header with search and controls */}
+                <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between mb-6">
                     <div>
-                        <h2 className="text-lg font-semibold text-gray-800">My Drive</h2>
-                        <div className="mt-1 flex flex-col sm:flex-row sm:flex-wrap sm:mt-0 sm:space-x-6 text-sm text-gray-500">
-                            <div className="mt-2 flex items-center">
-                                <span>Total Files: {files.length}</span>
+                        <h2 className="text-2xl font-bold text-gray-900">My Drive</h2>
+                        <div className="mt-2 flex flex-col sm:flex-row sm:flex-wrap sm:space-x-6 text-sm text-gray-500">
+                            <div className="flex items-center">
+                                <span>Total Files: {filteredAndSortedFiles.length}</span>
                             </div>
-                            <div className="mt-2 flex items-center">
+                            <div className="flex items-center">
                                 <span>Storage Used: {calculateStorageUsed()}</span>
                             </div>
-                            <div className="mt-2 flex items-center">
-                                <span>Last Updated: {files.length > 0 ? new Date(files[0].updatedAt).toLocaleDateString() : 'N/A'}</span>
-                            </div>
                         </div>
                     </div>
-                    <div className="mt-4 flex-shrink-0 flex md:mt-0 md:ml-4 space-x-2">
+                    <div className="mt-4 lg:mt-0 flex flex-col sm:flex-row gap-3">
+                        <div className="relative">
+                            <input
+                                type="text"
+                                placeholder="Search files..."
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                                className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#18b26f] focus:border-[#18b26f] w-full sm:w-64"
+                            />
+                            <svg className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="m21 21-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                            </svg>
+                        </div>
                         <a
                             href="/upload"
-                            className="inline-flex items-center px-3 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-[#18b26f] hover:bg-[#149d5f] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#18b26f] transition-all duration-150"
+                            className="inline-flex items-center px-4 py-2 bg-[#18b26f] text-white text-sm font-medium rounded-lg hover:bg-[#149d5f] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#18b26f] transition-colors"
                         >
-                            <svg className="mr-2 h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                            <svg className="mr-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
                             </svg>
-                            Upload New Files
+                            Upload
                         </a>
                     </div>
-                </div>                {/* File table with dynamic content */}
-                <div className="mt-8 overflow-hidden">
-                    {loading && (
-                        <div className="flex justify-center items-center py-12">
-                            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#18b26f]"></div>
-                        </div>
-                    )}
-
-                    {error && (
-                        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
-                            {error}
-                        </div>
-                    )}
-
-                    {!loading && !error && files.length === 0 && (
-                        <div className="text-center py-12">
-                            <p className="text-gray-500 text-lg">No files found. Upload some files to get started!</p>
-                        </div>
-                    )}
-
-                    {!loading && files.length > 0 && (
-                        <div className="align-middle inline-block min-w-full">
-                            <div className="overflow-hidden border border-gray-200 sm:rounded-lg">
-                                <table className="min-w-full divide-y divide-gray-200">
-                                    <thead className="bg-gray-50">
-                                        <tr>
-                                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">File ID</th>
-                                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">File</th>
-                                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
-                                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Size</th>
-                                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Uploaded</th>
-                                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody className="bg-white divide-y divide-gray-200">
-                                        {files.map((file, index) => {
-                                            // Helper function to format file size
-                                            const formatFileSize = (bytes: number): string => {
-                                                if (bytes < 1024) return bytes + ' B';
-                                                else if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB';
-                                                else if (bytes < 1073741824) return (bytes / 1048576).toFixed(1) + ' MB';
-                                                else return (bytes / 1073741824).toFixed(1) + ' GB';
-                                            };
-
-                                            // Function to get file type from mimetype
-                                            const getFileType = (mimetype: string): string => {
-                                                const parts = mimetype.split('/');
-                                                if (parts.length > 1) {
-                                                    return parts[1].toUpperCase();
-                                                }
-                                                return parts[0].toUpperCase();
-                                            };
-
-                                            // Format date to a readable format
-                                            const formatDate = (dateString: string): string => {
-                                                const date = new Date(dateString);
-                                                return date.toLocaleDateString('en-US', {
-                                                    year: 'numeric',
-                                                    month: 'short',
-                                                    day: 'numeric',
-                                                });
-                                            };
-
-                                            return (
-                                                <tr key={file._id} className="hover:bg-gray-50 transition-colors duration-150">
-                                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{file._id.substring(0, 6)}...</td>
-                                                    <td className="px-6 py-4 whitespace-nowrap">
-                                                        <div className="flex items-center">
-                                                            <div className="flex-shrink-0 h-8 w-8 bg-[#e6f5ee] text-[#18b26f] rounded-md flex items-center justify-center">
-                                                                <svg className="h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
-                                                                </svg>
-                                                            </div>
-                                                            <div className="ml-4">
-                                                                <div className="text-sm font-medium text-gray-900">{file.originalname}</div>
-                                                                <div className="text-xs text-gray-500">{file.filename}</div>
-                                                            </div>
-                                                        </div>
-                                                    </td>
-                                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{getFileType(file.mimetype)}</td>
-                                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{formatFileSize(file.size)}</td>
-                                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{formatDate(file.createdAt)}</td>
-                                                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                                        <div className="flex space-x-2">
-                                                            <button
-                                                                className="text-[#ff7a7a] hover:text-red-700 p-1 rounded-full hover:bg-red-50 transition-all duration-150"
-                                                                onClick={async () => {
-                                                                    if (window.confirm(`Are you sure you want to delete ${file.originalname}?`)) {
-                                                                        try {
-                                                                            const response: any = await axios.delete(`https://cloudnestaibackend.onrender.com/api/files/${file._id}`);
-                                                                            if (response.data.success) {
-                                                                                setFiles(prevFiles => prevFiles.filter(f => f._id !== file._id));
-                                                                            }
-                                                                        } catch (err) {
-                                                                            console.error('Error deleting file:', err);
-                                                                            alert('Failed to delete file. Please try again.');
-                                                                        }
-                                                                    }
-                                                                }}
-                                                            >
-                                                                <svg className="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                                                </svg>
-                                                            </button>
-                                                            <button
-                                                                className="text-[#18b26f] hover:text-[#149d5f] p-1 rounded-full hover:bg-[#e6f5ee] transition-all duration-150"
-                                                                onClick={() => {
-                                                                    window.open(`https://cloudnestaibackend.onrender.com/api/files/download/${file._id}`, '_blank');
-                                                                }}
-                                                            >
-                                                                <svg className="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                                                                </svg>
-                                                            </button>
-                                                        </div>
-                                                    </td>
-                                                </tr>
-                                            );
-                                        })}
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    )}
                 </div>
 
-                {/* Pagination Controls */}
+                {/* Controls bar */}
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 p-4 bg-gray-50 rounded-lg">
+                    <div className="flex items-center space-x-4 mb-4 sm:mb-0">
+                        <div className="flex items-center space-x-2">
+                            <label className="text-sm font-medium text-gray-700">Sort by:</label>
+                            <select
+                                value={sortBy}
+                                onChange={(e) => setSortBy(e.target.value as 'name' | 'date' | 'size')}
+                                className="text-sm bg-white border-0 rounded-lg px-3 py-2 text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-[#18b26f] focus:ring-opacity-50 transition-all cursor-pointer"
+                            >
+                                <option value="date">Date</option>
+                                <option value="name">Name</option>
+                                <option value="size">Size</option>
+                            </select>
+                            <button
+                                onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
+                                className="p-1 text-gray-500 hover:text-gray-700"
+                                title={`Sort ${sortOrder === 'asc' ? 'descending' : 'ascending'}`}
+                            >
+                                <svg className={`h-4 w-4 transform ${sortOrder === 'desc' ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                        <button
+                            onClick={() => setViewMode('list')}
+                            className={`p-2 rounded-md ${viewMode === 'list' ? 'bg-[#18b26f] text-white' : 'text-gray-500 hover:text-gray-700'}`}
+                            title="List view"
+                        >
+                            <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 10h16M4 14h16M4 18h16" />
+                            </svg>
+                        </button>
+                        <button
+                            onClick={() => setViewMode('grid')}
+                            className={`p-2 rounded-md ${viewMode === 'grid' ? 'bg-[#18b26f] text-white' : 'text-gray-500 hover:text-gray-700'}`}
+                            title="Grid view"
+                        >
+                            <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+
+                {/* Loading state */}
+                {loading && (
+                    <div className="flex justify-center items-center py-12">
+                        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#18b26f]"></div>
+                    </div>
+                )}
+
+                {/* Error state */}
+                {error && (
+                    <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-6">
+                        <div className="flex items-center">
+                            <svg className="h-5 w-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                                <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                            </svg>
+                            {error}
+                        </div>
+                    </div>
+                )}
+
+                {/* Empty state */}
+                {!loading && !error && filteredAndSortedFiles.length === 0 && (
+                    <div className="text-center py-12">
+                        <svg className="mx-auto h-16 w-16 text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                        </svg>
+                        <h3 className="text-lg font-medium text-gray-900 mb-2">No files found</h3>
+                        <p className="text-gray-500 mb-6">
+                            {searchTerm ? `No files match "${searchTerm}"` : "Upload some files to get started!"}
+                        </p>
+                        <a
+                            href="/upload"
+                            className="inline-flex items-center px-4 py-2 bg-[#18b26f] text-white text-sm font-medium rounded-lg hover:bg-[#149d5f]"
+                        >
+                            <svg className="mr-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
+                            </svg>
+                            Upload Files
+                        </a>
+                    </div>
+                )}
+
+                {/* Files display */}
+                {!loading && !error && filteredAndSortedFiles.length > 0 && (
+                    <>
+                        {viewMode === 'list' ? (
+                            /* List View with Google Drive-like dropdown menu */
+                            <DashboardFileTable
+                                files={filteredAndSortedFiles}
+                                onDownload={handleDownload}
+                                onDelete={handleDelete}
+                                onRename={handleRename}
+                                onCopy={handleCopy}
+                                onShare={handleShare}
+                                onPreview={handlePreview}
+                                onMove={handleMove}
+                            />
+                        ) : (
+                            /* Grid View */
+                            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+                                {filteredAndSortedFiles.map((file) => (
+                                    <GoogleDriveFileItem
+                                        key={file._id}
+                                        file={file}
+                                        viewMode="grid"
+                                        onDownload={handleDownload}
+                                        onDelete={handleDelete}
+                                        onRename={handleRename}
+                                        onCopy={handleCopy}
+                                        onShare={handleShare}
+                                        onPreview={handlePreview}
+                                        onMove={handleMove}
+                                    />
+                                ))}
+                            </div>
+                        )}
+                    </>
+                )}
+
+                {/* Pagination */}
                 {pagination && pagination.totalPages > 1 && (
                     <div className="flex justify-center mt-8">
-                        <nav className="flex items-center">
+                        <nav className="flex items-center space-x-2">
                             <button
-                                className={`mx-1 px-4 py-2 rounded-md shadow-sm text-sm font-medium ${!pagination.hasPreviousPage
-                                    ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                                    : 'bg-white text-[#18b26f] hover:bg-[#e6f5ee] border border-[#18b26f]'
-                                    }`}
                                 disabled={!pagination.hasPreviousPage}
                                 onClick={async () => {
                                     if (pagination.hasPreviousPage) {
                                         try {
                                             setLoading(true);
+                                            const authToken = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
                                             const page = pagination.currentPage - 1;
-                                            const response = await axios.get<ApiResponse>(`https://cloudnestaibackend.onrender.com/api/files?page=${page}`);
+                                            const response = await axios.get<ApiResponse>(
+                                                `${process.env.NEXT_PUBLIC_API_URL}/api/files/?page=${page}`,
+                                                {
+                                                    headers: { 'Authorization': `Bearer ${authToken}` }
+                                                }
+                                            );
 
                                             if (response.data.success) {
                                                 setFiles(response.data.data);
@@ -255,26 +536,32 @@ function DashboardContent() {
                                         }
                                     }
                                 }}
+                                className={`px-4 py-2 rounded-md text-sm font-medium ${!pagination.hasPreviousPage
+                                    ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                                    : 'bg-white text-[#18b26f] border border-[#18b26f] hover:bg-[#e6f5ee]'
+                                    } transition-colors`}
                             >
                                 Previous
                             </button>
 
-                            <span className="mx-4 text-sm font-medium text-gray-700">
+                            <span className="px-4 py-2 text-sm font-medium text-gray-700">
                                 Page {pagination.currentPage} of {pagination.totalPages}
                             </span>
 
                             <button
-                                className={`mx-1 px-4 py-2 rounded-md shadow-sm text-sm font-medium ${!pagination.hasNextPage
-                                    ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                                    : 'bg-white text-[#18b26f] hover:bg-[#e6f5ee] border border-[#18b26f]'
-                                    }`}
                                 disabled={!pagination.hasNextPage}
                                 onClick={async () => {
                                     if (pagination.hasNextPage) {
                                         try {
                                             setLoading(true);
+                                            const authToken = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
                                             const page = pagination.currentPage + 1;
-                                            const response = await axios.get<ApiResponse>(`https://cloudnestaibackend.onrender.com/api/files?page=${page}`);
+                                            const response = await axios.get<ApiResponse>(
+                                                `${process.env.NEXT_PUBLIC_API_URL}/api/files/?page=${page}`,
+                                                {
+                                                    headers: { 'Authorization': `Bearer ${authToken}` }
+                                                }
+                                            );
 
                                             if (response.data.success) {
                                                 setFiles(response.data.data);
@@ -287,6 +574,10 @@ function DashboardContent() {
                                         }
                                     }
                                 }}
+                                className={`px-4 py-2 rounded-md text-sm font-medium ${!pagination.hasNextPage
+                                    ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                                    : 'bg-white text-[#18b26f] border border-[#18b26f] hover:bg-[#e6f5ee]'
+                                    } transition-colors`}
                             >
                                 Next
                             </button>
@@ -294,42 +585,52 @@ function DashboardContent() {
                     </div>
                 )}
 
-                {/* Summary and Actions */}
-                <div className="mt-8 flex flex-col-reverse md:flex-row justify-between">
-                    <div className="mt-4 md:mt-0">
-                        <div className="flex space-x-3 mt-6">
-                            <a
-                                href="/upload"
-                                className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-[#18b26f] hover:bg-[#149d5f] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#18b26f] transition-all duration-150 flex items-center"
-                            >
-                                <svg className="mr-2 h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-                                </svg>
-                                Upload New Files
-                            </a>
-                            <a
-                                href="/insights"
-                                className="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#18b26f] transition-all duration-150 flex items-center"
-                            >
-                                <svg className="mr-2 h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                                </svg>
-                                View Insights
-                            </a>
+                {/* Storage summary */}
+                {!loading && !error && filteredAndSortedFiles.length > 0 && (
+                    <div className="mt-8 bg-gray-50 rounded-lg p-6">
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <h3 className="text-lg font-medium text-gray-900">Storage Summary</h3>
+                                <div className="mt-2 grid grid-cols-1 sm:grid-cols-3 gap-4">
+                                    <div>
+                                        <div className="text-sm text-gray-500">Total Files</div>
+                                        <div className="text-2xl font-bold text-gray-900">{filteredAndSortedFiles.length}</div>
+                                    </div>
+                                    <div>
+                                        <div className="text-sm text-gray-500">Storage Used</div>
+                                        <div className="text-2xl font-bold text-[#18b26f]">{calculateStorageUsed()}</div>
+                                    </div>
+                                    <div>
+                                        <div className="text-sm text-gray-500">Public Files</div>
+                                        <div className="text-2xl font-bold text-blue-600">
+                                            {filteredAndSortedFiles.filter(f => f.isPublic).length}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="hidden lg:flex space-x-3">
+                                <a
+                                    href="/upload"
+                                    className="inline-flex items-center px-4 py-2 bg-[#18b26f] text-white text-sm font-medium rounded-lg hover:bg-[#149d5f]"
+                                >
+                                    <svg className="mr-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
+                                    </svg>
+                                    Upload More
+                                </a>
+                                <a
+                                    href="/insights"
+                                    className="inline-flex items-center px-4 py-2 bg-white border border-gray-300 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-50"
+                                >
+                                    <svg className="mr-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                                    </svg>
+                                    View Insights
+                                </a>
+                            </div>
                         </div>
                     </div>
-
-                    <div className="bg-gray-50 p-4 rounded-md border border-gray-200">
-                        <div className="flex justify-between text-base font-medium text-gray-900">
-                            <p>Total Files</p>
-                            <p>{pagination?.totalFiles || files.length}</p>
-                        </div>
-                        <div className="flex justify-between text-lg font-semibold text-gray-900 mt-2">
-                            <p>Storage Used</p>
-                            <p>{calculateStorageUsed()}</p>
-                        </div>
-                    </div>
-                </div>
+                )}
             </div>
         </DashboardLayout>
     );

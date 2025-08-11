@@ -6,6 +6,9 @@ import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import Toast from '@/component/common/Toast';
 
+// API Base URL from environment variables
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://cloudnestaibackend.onrender.com';
+
 export default function RegisterForm() {
     const [name, setName] = useState('');
     const [email, setEmail] = useState('');
@@ -38,7 +41,7 @@ export default function RegisterForm() {
                 }
 
                 // Send the Google token to your backend
-                const apiResponse = await fetch('https://cloudnestaibackend.onrender.com/api/auth/google', {
+                const apiResponse = await fetch(`${API_BASE_URL}/api/auth/google`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -138,7 +141,7 @@ export default function RegisterForm() {
 
         try {
             // Call backend API for user registration
-            const response = await fetch('https://cloudnestaibackend.onrender.com/api/auth/register', {
+            const response = await fetch(`${API_BASE_URL}/api/auth/register`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -157,7 +160,7 @@ export default function RegisterForm() {
                 localStorage.setItem('authToken', data.data.token);
                 localStorage.setItem('userSession', 'true');
 
-                // Show success toast
+                // Show success toast 
                 showToastMessage('Account created successfully! Redirecting...', 'success');
                 setIsLoading(false);
 

@@ -85,7 +85,7 @@ const Search: React.FC = () => {
             setSearchQuery(query);
 
             const response = await axios.get<SearchResponse>(
-                `https://cloudnestaibackend.onrender.com/api/files/search?q=${encodeURIComponent(query)}`
+                `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/files/search?q=${encodeURIComponent(query)}`
             );
 
             if (response.data.success) {

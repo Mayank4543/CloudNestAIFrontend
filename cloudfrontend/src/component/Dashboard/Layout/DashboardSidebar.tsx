@@ -31,7 +31,7 @@ const DashboardSidebar: React.FC<DashboardSidebarProps> = ({ isOpen }) => {
             const authToken = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
             if (!authToken) return;
 
-            const response = await fetch('https://cloudnestaibackend.onrender.com/api/auth/profile', {
+            const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/auth/profile`, {
                 method: 'GET',
                 headers: {
                     'Authorization': `Bearer ${authToken}`,

@@ -6,6 +6,9 @@ import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import Toast from '@/component/common/Toast';
 
+// API Base URL from environment variables
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://cloudnestaibackend.onrender.com';
+
 export default function LoginForm() {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
@@ -37,7 +40,7 @@ export default function LoginForm() {
                 }
 
                 // Send the Google token to your backend
-                const apiResponse = await fetch('https://cloudnestaibackend.onrender.com/api/auth/google', {
+                const apiResponse = await fetch(`${API_BASE_URL}/api/auth/google`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -127,7 +130,7 @@ export default function LoginForm() {
             console.log('Making API call to login...');
 
             // Call backend API for authentication
-            const response = await fetch('https://cloudnestaibackend.onrender.com/api/auth/login', {
+            const response = await fetch(`${API_BASE_URL}/api/auth/login`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

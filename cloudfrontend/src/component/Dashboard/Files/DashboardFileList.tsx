@@ -60,7 +60,7 @@ const DashboardFileList: React.FC<DashboardFileListProps> = ({ onSearch }) => {
         setLoading(true);
         setError(null);
         try {
-            const response = await axios.get<ApiResponse>(`https://cloudnestaibackend.onrender.com/api/files`, {
+            const response = await axios.get<ApiResponse>(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/files`, {
                 params: {
                     page,
                     limit: pagination.limit,

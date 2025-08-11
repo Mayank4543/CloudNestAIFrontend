@@ -304,7 +304,7 @@ const DashboardFileTable: React.FC<DashboardFileTableProps> = ({
                             className="flex items-center w-full px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-100"
                             onClick={() => {
                                 // Generate API link for file
-                                const fileLink = `https://cloudnestaibackend.onrender.com/api/files/${file._id}/view`;
+                                const fileLink = `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/files/${file._id}/view`;
                                 navigator.clipboard.writeText(fileLink);
 
                                 // Visual feedback without alert

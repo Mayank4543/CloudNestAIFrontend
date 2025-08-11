@@ -67,7 +67,7 @@ function DashboardContent() {
                 }
 
                 const response = await axios.get<ApiResponse>(
-                    `${process.env.NEXT_PUBLIC_API_URL}/api/files/`,
+                    `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/files/`,
                     {
                         headers: {
                             'Authorization': `Bearer ${authToken}`,
@@ -145,7 +145,7 @@ function DashboardContent() {
             }
 
             const response = await axios.delete<ApiResponse>(
-                `${process.env.NEXT_PUBLIC_API_URL}/api/files/${fileId}`,
+                `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/files/${fileId}`,
                 {
                     headers: {
                         'Authorization': `Bearer ${authToken}`,
@@ -178,7 +178,7 @@ function DashboardContent() {
         }
 
         // Create a temporary link to download the file
-        const downloadUrl = `${process.env.NEXT_PUBLIC_API_URL}/api/files/download/${fileId}`;
+        const downloadUrl = `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/files/download/${fileId}`;
         const link = document.createElement('a');
         link.href = downloadUrl;
         link.download = fileName;
@@ -198,7 +198,7 @@ function DashboardContent() {
             }
 
             const response = await axios.patch<ApiResponse>(
-                `${process.env.NEXT_PUBLIC_API_URL}/api/files/${fileId}`,
+                `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/files/${fileId}`,
                 { originalname: newName },
                 {
                     headers: {
@@ -240,7 +240,7 @@ function DashboardContent() {
 
     const handlePreview = (file: FileData) => {
         // Open file in new tab for preview
-        const previewUrl = `${process.env.NEXT_PUBLIC_API_URL}/api/files/download/${file._id}`;
+        const previewUrl = `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/files/download/${file._id}`;
         window.open(previewUrl, '_blank');
     };
 
@@ -428,7 +428,7 @@ function DashboardContent() {
                                             const authToken = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
                                             const page = pagination.currentPage - 1;
                                             const response = await axios.get<ApiResponse>(
-                                                `${process.env.NEXT_PUBLIC_API_URL}/api/files/?page=${page}`,
+                                                `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/files/?page=${page}`,
                                                 {
                                                     headers: { 'Authorization': `Bearer ${authToken}` }
                                                 }
@@ -466,7 +466,7 @@ function DashboardContent() {
                                             const authToken = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
                                             const page = pagination.currentPage + 1;
                                             const response = await axios.get<ApiResponse>(
-                                                `${process.env.NEXT_PUBLIC_API_URL}/api/files/?page=${page}`,
+                                                `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/files/?page=${page}`,
                                                 {
                                                     headers: { 'Authorization': `Bearer ${authToken}` }
                                                 }

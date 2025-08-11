@@ -64,8 +64,7 @@ const UploadForm: React.FC = () => {
         try {
             const formData = new FormData();
 
-            // Append a single file to FormData using field name "file"
-            // Backend expects multer.single("file")
+           
             if (files[0]) {
                 formData.append('file', files[0]);
             }

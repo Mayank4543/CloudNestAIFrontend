@@ -4,9 +4,31 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
+import GlobalSearch from '../../common/GlobalSearch';
+
+interface FileData {
+    _id: string;
+    filename: string;
+    originalname: string;
+    mimetype: string;
+    size: number;
+    path: string;
+    userId: string;
+    isPublic: boolean;
+    tags: string[];
+    createdAt: string;
+    updatedAt: string;
+    url?: string;
+    owner?: {
+        name: string;
+        email: string;
+    };
+}
 
 interface DashboardTopNavbarProps {
     onMenuButtonClick: () => void;
+    onSearchResults?: (results: FileData[], searchType: 'keyword' | 'semantic') => void;
+    onClearSearch?: () => void; // Add clear search callback
 }
 
 interface UserProfile {
@@ -18,7 +40,7 @@ interface UserProfile {
     provider?: 'local' | 'google';
 }
 
-const DashboardTopNavbar: React.FC<DashboardTopNavbarProps> = ({ onMenuButtonClick }) => {
+const DashboardTopNavbar: React.FC<DashboardTopNavbarProps> = ({ onMenuButtonClick, onSearchResults, onClearSearch }) => {
     const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
     const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
     const router = useRouter();
@@ -135,30 +157,11 @@ const DashboardTopNavbar: React.FC<DashboardTopNavbarProps> = ({ onMenuButtonCli
 
                         <div className="flex items-center flex-1">
                             <div className="max-w-2xl w-full">
-                                <div className="relative">
-                                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                        <svg
-                                            className="h-5 w-5 text-gray-400"
-                                            xmlns="http://www.w3.org/2000/svg"
-                                            viewBox="0 0 20 20"
-                                            fill="currentColor"
-                                            aria-hidden="true"
-                                        >
-                                            <path
-                                                fillRule="evenodd"
-                                                d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z"
-                                                clipRule="evenodd"
-                                            />
-                                        </svg>
-                                    </div>
-                                    <input
-                                        type="text"
-                                        name="search"
-                                        id="search"
-                                        className="block w-full pl-10 pr-3 py-2 border border-gray-200 rounded-full leading-5 bg-gray-50 placeholder-gray-400 focus:outline-none focus:bg-white focus:border-[#18b26f] focus:ring-1 focus:ring-[#18b26f] sm:text-sm transition-all duration-150"
-                                        placeholder="Search files, folders..."
-                                    />
-                                </div>
+                                <GlobalSearch
+                                    onSearchResults={onSearchResults}
+                                    onClearSearch={onClearSearch}
+                                    placeholder="Search files..."
+                                />
                             </div>
                         </div>
                     </div>

@@ -24,3 +24,113 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/* File Preview Modal Styles */
+.file-preview-modal-overlay {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  background: rgba(15, 23, 42, 0.85) !important;
+  /* More elegant dark background */
+  z-index: 999999 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  cursor: pointer !important;
+  animation: modalFadeIn 0.35s cubic-bezier(0.27, 0.22, 0.25, 1.0) !important;
+  backdrop-filter: blur(8px) !important;
+  /* Stronger blur effect */
+}
+
+@keyframes modalFadeIn {
+  from {
+    opacity: 0;
+    backdrop-filter: blur(0);
+    transform: scale(0.98);
+  }
+
+  to {
+    opacity: 1;
+    backdrop-filter: blur(8px);
+    transform: scale(1);
+  }
+}
+
+/* Add animation for buttons */
+@keyframes pulseGlow {
+  0% {
+    box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.5);
+  }
+
+  70% {
+    box-shadow: 0 0 0 10px rgba(59, 130, 246, 0);
+  }
+
+  100% {
+    box-shadow: 0 0 0 0 rgba(59, 130, 246, 0);
+  }
+}
+
+.file-preview-modal-container {
+  width: 100% !important;
+  height: 100% !important;
+  position: relative !important;
+  display: flex !important;
+  background: transparent !important;
+}
+
+/* Remove the z-index inheritance as it can cause issues */
+/* .file-preview-modal-overlay * {
+  z-index: inherit;
+} */
+
+/* Hide body scroll when modal is open */
+body.modal-open {
+  overflow: hidden !important;
+}
+
+/* Custom Scrollbar Styles for Summary Modal */
+.summary-scrollable {
+  scrollbar-width: thin;
+  scrollbar-color: #9CA3AF #F3F4F6;
+}
+
+.summary-scrollable::-webkit-scrollbar {
+  width: 8px;
+}
+
+.summary-scrollable::-webkit-scrollbar-track {
+  background: #F3F4F6;
+  border-radius: 4px;
+}
+
+.summary-scrollable::-webkit-scrollbar-thumb {
+  background: #9CA3AF;
+  border-radius: 4px;
+  transition: background-color 0.2s ease;
+}
+
+.summary-scrollable::-webkit-scrollbar-thumb:hover {
+  background: #6B7280;
+}
+
+.summary-scrollable::-webkit-scrollbar-thumb:active {
+  background: #4B5563;
+}
+
+/* Enhanced scrolling for better user experience */
+.summary-scrollable {
+  scroll-behavior: smooth;
+}
+
+/* Custom scrollbar for Firefox */
+@supports (scrollbar-width: thin) {
+  .summary-scrollable {
+    scrollbar-width: thin;
+    scrollbar-color: #9CA3AF #F3F4F6;
+  }
+}

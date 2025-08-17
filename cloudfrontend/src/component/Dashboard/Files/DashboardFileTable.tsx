@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { formatFileSize, getLocationPath } from '@/utils/api';
+import { formatFileSize } from '@/utils/api';
 import ShareModal from './ShareModal';
+import SummarizeModal from './SummarizeModal';
 
 interface FileData {
     _id: string;
@@ -19,6 +20,7 @@ interface FileData {
         name: string;
         email: string;
     };
+    relevanceScore?: number; // For AI search results
 }
 
 interface DashboardFileTableProps {
@@ -30,6 +32,7 @@ interface DashboardFileTableProps {
     onPreview: (file: FileData) => void;
     onShare: (fileId: string) => void;
     onMove: (fileId: string, destinationFolderId: string) => void;
+    searchType?: 'keyword' | 'semantic'; // Add search type prop
 }
 
 const DashboardFileTable: React.FC<DashboardFileTableProps> = ({
@@ -40,10 +43,51 @@ const DashboardFileTable: React.FC<DashboardFileTableProps> = ({
     onCopy,
     onPreview,
     onShare,
-    onMove
+    onMove,
+    searchType = 'keyword'
 }) => {
     const [hoveredRow, setHoveredRow] = useState<string | null>(null);
     const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
+    const [summarizeModalOpen, setSummarizeModalOpen] = useState<boolean>(false);
+    const [selectedFileForSummary, setSelectedFileForSummary] = useState<FileData | null>(null);
+
+    // Helper function to copy private link
+    const copyPrivateLink = async (file: FileData) => {
+        try {
+            // Generate proxy link like in ShareModal
+            const filename = file.filename || file.originalname || 'unknown_file';
+            let link = `${process.env.NEXT_PUBLIC_API_BASE_URL || 'https://cloudnestaibackend.onrender.com'}/api/files/proxy/${encodeURIComponent(filename)}`;
+
+            // Handle different file types like in ShareModal
+            const mimetype = file.mimetype || '';
+            if (mimetype.includes('presentation') || mimetype.includes('powerpoint') || filename.endsWith('.ppt') || filename.endsWith('.pptx')) {
+                link = `https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(link)}`;
+            }
+
+            await navigator.clipboard.writeText(link);
+            showToast('Private Link Copied', 'success');
+            setActiveDropdown(null);
+            setActiveShareSubmenu(null);
+        } catch (error) {
+            console.error('Error copying link:', error);
+            showToast('Error copying link', 'error');
+        }
+    };
+
+    // Helper function to show toast messages
+    const showToast = (message: string, type: 'success' | 'error' = 'success') => {
+        const toast = document.createElement('div');
+        const bgColor = type === 'success' ? 'bg-gray-800' : 'bg-red-800';
+        toast.className = `fixed bottom-4 right-4 ${bgColor} text-white px-6 py-3 rounded shadow-lg z-[100]`;
+        toast.textContent = message;
+        document.body.appendChild(toast);
+
+        setTimeout(() => {
+            if (document.body.contains(toast)) {
+                document.body.removeChild(toast);
+            }
+        }, 3000);
+    };
 
     // Get file icon based on mimetype
     const getFileIcon = (mimetype: string) => {
@@ -185,7 +229,7 @@ const DashboardFileTable: React.FC<DashboardFileTableProps> = ({
                 <button
                     onClick={() => {
                         if (file.url) {
-                            window.open(file.url, '_blank');
+                            window.open(file.url);
                         }
                         setActiveDropdown(null);
                         setActiveShareSubmenu(null);
@@ -302,25 +346,8 @@ const DashboardFileTable: React.FC<DashboardFileTableProps> = ({
 
                         <button
                             className="flex items-center w-full px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-100"
-                            onClick={() => {
-                                // Generate API link for file
-                                const fileLink = `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/files/${file._id}/view`;
-                                navigator.clipboard.writeText(fileLink);
+                            onClick={() => { copyPrivateLink(file) }}
 
-                                // Visual feedback without alert
-                                const toast = document.createElement('div');
-                                toast.className = 'fixed bottom-4 right-4 bg-gray-800 text-white px-6 py-3 rounded shadow-lg z-[100]';
-                                toast.textContent = 'Link copied to clipboard!';
-                                document.body.appendChild(toast);
-
-                                // Remove toast after 3 seconds
-                                setTimeout(() => {
-                                    document.body.removeChild(toast);
-                                }, 3000);
-
-                                setActiveDropdown(null);
-                                setActiveShareSubmenu(null);
-                            }}
                         >
                             <svg className="w-4 h-4 mr-3 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
@@ -346,6 +373,23 @@ const DashboardFileTable: React.FC<DashboardFileTableProps> = ({
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 19a2 2 0 01-2-2V7a2 2 0 012-2h4l2 2h4a2 2 0 012 2v1M5 19h14a2 2 0 002-2v-5a2 2 0 00-2-2H9a2 2 0 00-2 2v5a2 2 0 01-2 2z" />
                     </svg>
                     <span className="font-medium">Move to folder</span>
+                </button>
+
+                {/* Summarise with AI option */}
+                <button
+                    onClick={() => {
+                        setSelectedFileForSummary(file);
+                        setSummarizeModalOpen(true);
+                        setActiveDropdown(null);
+                        setActiveShareSubmenu(null);
+                    }}
+                    className="flex items-center w-full px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-100"
+                >
+                    <svg className="w-4 h-4 mr-3 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                    </svg>
+                    <span className="font-medium">Summarise with AI</span>
+                    <span className="ml-auto text-xs text-gray-400">AI</span>
                 </button>
 
                 {/* Move to trash option */}
@@ -379,6 +423,16 @@ const DashboardFileTable: React.FC<DashboardFileTableProps> = ({
                 />
             )}
 
+            {/* Summarize Modal */}
+            <SummarizeModal
+                file={selectedFileForSummary}
+                isOpen={summarizeModalOpen}
+                onClose={() => {
+                    setSummarizeModalOpen(false);
+                    setSelectedFileForSummary(null);
+                }}
+            />
+
             <div className="bg-white shadow-sm border border-gray-200 rounded-lg overflow-hidden">
                 <div className="overflow-x-auto">
                     <table className="min-w-full divide-y divide-gray-200">
@@ -386,6 +440,9 @@ const DashboardFileTable: React.FC<DashboardFileTableProps> = ({
                             <tr>
                                 <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                     Name
+                                </th>
+                                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Tags
                                 </th>
                                 <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                     Owner
@@ -396,6 +453,11 @@ const DashboardFileTable: React.FC<DashboardFileTableProps> = ({
                                 <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                     File size
                                 </th>
+                                {searchType === 'semantic' && (
+                                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        AI Score
+                                    </th>
+                                )}
                             </tr>
                         </thead>
                         <tbody className="bg-white divide-y divide-gray-200">
@@ -423,6 +485,32 @@ const DashboardFileTable: React.FC<DashboardFileTableProps> = ({
                                             </div>
                                         </div>
                                     </td>
+                                    <td className="px-6 py-4">
+                                        <div className="flex items-center max-w-xs">
+                                            {file.tags && file.tags.length > 0 ? (
+                                                <span
+                                                    className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-gradient-to-r from-blue-100 to-indigo-100 text-blue-800 border border-blue-200 shadow-sm hover:shadow-md transition-all cursor-pointer"
+                                                    title={`Tag: ${file.tags[0]}${file.tags.length > 1 ? ` (+${file.tags.length - 1} more)` : ''}`}
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        console.log('All tags:', file.tags);
+                                                    }}
+                                                >
+                                                    <svg className="w-3 h-3 mr-1 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+                                                        <path fillRule="evenodd" d="M17.707 9.293a1 1 0 010 1.414l-7 7a1 1 0 01-1.414 0l-7-7A.997.997 0 012 10V5a3 3 0 013-3h5c.256 0 .512.098.707.293l7 7zM5 6a1 1 0 100-2 1 1 0 000 2z" clipRule="evenodd" />
+                                                    </svg>
+                                                    {file.tags[0].length > 15 ? `${file.tags[0].substring(0, 15)}...` : file.tags[0]}
+                                                </span>
+                                            ) : (
+                                                <span className="text-gray-400 text-sm italic flex items-center">
+                                                    <svg className="w-4 h-4 mr-1 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+                                                    </svg>
+                                                    No tags
+                                                </span>
+                                            )}
+                                        </div>
+                                    </td>
                                     <td className="px-6 py-4 whitespace-nowrap">
                                         <div className="flex items-center">
                                             <div className="h-8 w-8 bg-[#18b26f] rounded-full flex items-center justify-center text-white text-sm font-medium">
@@ -436,15 +524,17 @@ const DashboardFileTable: React.FC<DashboardFileTableProps> = ({
                                         </div>
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap">
-                                        <div className="text-sm text-gray-900">{getLocationPath(file.path)}</div>
+                                        {/* <div className="text-sm text-gray-900">{getLocationPath(file.path)}</div> */}
                                         <div className="text-xs text-gray-500">{file.isPublic ? 'Accessible to anyone' : 'Only you'}</div>
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                         <div className="flex items-center justify-between">
-                                            <span>{formatFileSize(file.size)}</span>
+                                            <span>
+                                                {file.size && file.size > 0 ? formatFileSize(file.size) : 'N/A'}
+                                            </span>
                                             <div className="relative">
                                                 <button
-                                                    className={`p-2 rounded-full hover:bg-gray-100 transition-all duration-200 ease-out ${hoveredRow === file._id ? 'opacity-100' : 'opacity-0'}`}
+                                                    className="p-2 rounded-full hover:bg-gray-100 transition-all duration-200 ease-out opacity-100"
                                                     onClick={(e) => {
                                                         e.stopPropagation();
                                                         toggleDropdown(file._id, e);
@@ -460,6 +550,17 @@ const DashboardFileTable: React.FC<DashboardFileTableProps> = ({
                                             </div>
                                         </div>
                                     </td>
+                                    {searchType === 'semantic' && (
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                            {file.relevanceScore ? (
+                                                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                                    {Math.round(file.relevanceScore * 100)}% match
+                                                </span>
+                                            ) : (
+                                                <span className="text-gray-400">-</span>
+                                            )}
+                                        </td>
+                                    )}
                                 </tr>
                             ))}
                         </tbody>

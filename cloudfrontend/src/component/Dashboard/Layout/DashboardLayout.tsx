@@ -4,11 +4,32 @@ import React, { useState } from 'react';
 import DashboardSidebar from './DashboardSidebar';
 import DashboardTopNavbar from './DashboardTopNavbar';
 
-interface DashboardLayoutProps {
-    children: React.ReactNode;
+interface FileData {
+    _id: string;
+    filename: string;
+    originalname: string;
+    mimetype: string;
+    size: number;
+    path: string;
+    userId: string;
+    isPublic: boolean;
+    tags: string[];
+    createdAt: string;
+    updatedAt: string;
+    url?: string;
+    owner?: {
+        name: string;
+        email: string;
+    };
 }
 
-const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
+interface DashboardLayoutProps {
+    children: React.ReactNode;
+    onSearchResults?: (results: FileData[], searchType: 'keyword' | 'semantic') => void;
+    onClearSearch?: () => void; // Add clear search callback
+}
+
+const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, onSearchResults, onClearSearch }) => {
     const [sidebarOpen, setSidebarOpen] = useState(true);
 
     const toggleSidebar = () => {
@@ -22,28 +43,10 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
 
             {/* Main content */}
             <div className="flex flex-col w-0 flex-1 overflow-hidden">
-                <DashboardTopNavbar onMenuButtonClick={toggleSidebar} />
+                <DashboardTopNavbar onMenuButtonClick={toggleSidebar} onSearchResults={onSearchResults} onClearSearch={onClearSearch} />
 
                 <main className="flex-1 relative overflow-y-auto focus:outline-none">
-                    <div className="py-6 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
-                        <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-6">
-                            {children}
-                        </div>
-
-                        {/* Action buttons at bottom - similar to Foodager reference */}
-                        <div className="mt-6 flex justify-end space-x-3">
-                            <button
-                                className="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#18b26f] transition-all duration-150"
-                            >
-                                Cancel
-                            </button>
-                            <button
-                                className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-[#18b26f] hover:bg-[#149d5f] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#18b26f] transition-all duration-150"
-                            >
-                                Save Changes
-                            </button>
-                        </div>
-                    </div>
+                    {children}
                 </main>
             </div>
         </div>

@@ -249,7 +249,7 @@ const FileItemMenu: React.FC<FileItemMenuProps> = ({
                 }
                 label="Google Docs"
                 onClick={() => {
-                    window.open(`https://docs.google.com/document/create`, '_blank');
+                    window.open(`https://docs.google.com/document/create`, );
                     setIsMenuOpen(false);
                 }}
             />
@@ -273,7 +273,7 @@ const FileItemMenu: React.FC<FileItemMenuProps> = ({
                 }
                 label="DocHub"
                 onClick={() => {
-                    window.open(`https://dochub.com`, '_blank');
+                    window.open(`https://dochub.com`);
                     setIsMenuOpen(false);
                 }}
             />

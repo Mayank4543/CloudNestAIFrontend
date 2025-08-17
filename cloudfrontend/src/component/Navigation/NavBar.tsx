@@ -4,14 +4,21 @@ import React from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
+import GlobalSearch from '../common/GlobalSearch';
 
 const NavBar: React.FC = () => {
     const pathname = usePathname();
 
     // Don't show navbar on dashboard pages
-    if (pathname.startsWith('/dashboard') || pathname === '/upload' || pathname === '/insights') {
+    if (pathname.startsWith('/dashboard') || pathname === '/upload' || pathname === '/insights' || pathname === '/search') {
         return null;
     }
+
+    // Handle search results - for now just log them
+    const handleSearchResults = (results: unknown[], searchType: 'keyword' | 'semantic') => {
+        console.log('Search results:', results, 'Type:', searchType);
+        // You can implement navigation to search results page here
+    };
 
     return (
         <nav className="bg-white shadow-md">
@@ -29,6 +36,15 @@ const NavBar: React.FC = () => {
                             />
                             <span className="text-xl font-bold text-[#18b26f]">CloudNest</span>
                         </Link>
+                    </div>
+
+                    {/* Global Search Bar */}
+                    <div className="flex-1 flex justify-center px-4">
+                        <GlobalSearch
+                            onSearchResults={handleSearchResults}
+                            onClearSearch={() => { }} // Empty function for public navbar
+                            placeholder="Search files..."
+                        />
                     </div>
 
                     <div className="flex items-center">

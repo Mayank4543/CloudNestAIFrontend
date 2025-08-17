@@ -5,6 +5,7 @@ import DashboardLayout from '@/component/Dashboard/Layout/DashboardLayout';
 import ProtectedRoute from '@/component/common/ProtectedRoute';
 import GoogleDriveFileItem from '@/component/Dashboard/Files/GoogleDriveFileItem';
 import DashboardFileTable from '@/component/Dashboard/Files/DashboardFileTable';
+import FilePreviewModal from '@/component/Dashboard/Files/FilePreviewModal';
 import axios from 'axios';
 
 interface FileData {
@@ -24,6 +25,7 @@ interface FileData {
         name: string;
         email: string;
     };
+    relevanceScore?: number; // For AI search results
 }
 
 interface PaginationData {
@@ -48,9 +50,41 @@ function DashboardContent() {
     const [error, setError] = useState<string | null>(null);
     const [pagination, setPagination] = useState<PaginationData | null>(null);
     const [viewMode, setViewMode] = useState<'list' | 'grid'>('list');
-    const [searchTerm, setSearchTerm] = useState<string>('');
     const [sortBy, setSortBy] = useState<'name' | 'date' | 'size'>('date');
     const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+    const [previewModalOpen, setPreviewModalOpen] = useState<boolean>(false);
+    const [previewFile, setPreviewFile] = useState<FileData | null>(null);
+    const [previewFileIndex, setPreviewFileIndex] = useState<number>(-1);
+    const [searchResults, setSearchResults] = useState<FileData[]>([]);
+    const [searchType, setSearchType] = useState<'keyword' | 'semantic'>('keyword');
+    const [isSearching, setIsSearching] = useState(false);
+
+    // Helper function to normalize tags data
+    const normalizeTags = (tags: unknown): string[] => {
+        if (!tags) return [];
+
+        if (Array.isArray(tags)) {
+            return tags.map(tag =>
+                typeof tag === 'string' ? tag.replace(/[\[\]"']/g, '').trim() : String(tag).trim()
+            ).filter(tag => tag.length > 0);
+        }
+
+        if (typeof tags === 'string') {
+            try {
+                // Try to parse as JSON array
+                const parsed = JSON.parse(tags);
+                if (Array.isArray(parsed)) {
+                    return parsed.map(tag => String(tag).replace(/[\[\]"']/g, '').trim()).filter(tag => tag.length > 0);
+                }
+                return [String(parsed).replace(/[\[\]"']/g, '').trim()].filter(tag => tag.length > 0);
+            } catch {
+                // If parsing fails, treat as single tag and clean it
+                return [tags.replace(/[\[\]"']/g, '').trim()].filter(tag => tag.length > 0);
+            }
+        }
+
+        return [];
+    };
 
     useEffect(() => {
         const fetchFiles = async () => {
@@ -76,7 +110,12 @@ function DashboardContent() {
                 );
 
                 if (response.data.success) {
-                    setFiles(response.data.data);
+                    // Normalize tags for all files
+                    const normalizedFiles = response.data.data.map(file => ({
+                        ...file,
+                        tags: normalizeTags(file.tags)
+                    }));
+                    setFiles(normalizedFiles);
                     setPagination(response.data.pagination);
                 } else {
                     setError(response.data.message || 'Failed to fetch files');
@@ -95,23 +134,71 @@ function DashboardContent() {
         };
 
         fetchFiles();
+
+        // Listen for file uploads from other tabs/components
+        const handleStorageChange = (e: StorageEvent) => {
+            if (e.key === 'fileUploaded' && e.newValue) {
+                console.log('📁 File upload detected, refreshing dashboard...');
+                // Remove the flag
+                localStorage.removeItem('fileUploaded');
+                // Refresh the files
+                fetchFiles();
+            }
+        };
+
+        // Listen for storage events
+        window.addEventListener('storage', handleStorageChange);
+
+        // Also listen for custom events within the same tab
+        const handleFileUpload = () => {
+            console.log('📁 File upload event detected, refreshing dashboard...');
+            fetchFiles();
+        };
+
+        window.addEventListener('fileUploaded', handleFileUpload);
+
+        return () => {
+            window.removeEventListener('storage', handleStorageChange);
+            window.removeEventListener('fileUploaded', handleFileUpload);
+        };
     }, []);
+
+    // Handle search results from GlobalSearch component
+    const handleSearchResults = (results: FileData[], type: 'keyword' | 'semantic') => {
+        console.log('Search results received:', results); // Debug log
+        console.log('Search type:', type); // Debug log
+
+        // Normalize tags for search results
+        const normalizedResults = results.map(file => ({
+            ...file,
+            tags: normalizeTags(file.tags)
+        }));
+
+        setSearchResults(normalizedResults);
+        setSearchType(type);
+        setIsSearching(normalizedResults.length > 0);
+        console.log('Search state updated, isSearching:', normalizedResults.length > 0); // Debug log
+    };
+
+    // Clear search results when search is cleared
+    const clearSearchResults = () => {
+        setSearchResults([]);
+        setIsSearching(false);
+        setSearchType('keyword');
+    };
 
     // Calculate storage usage
     const calculateStorageUsed = () => {
-        if (files.length === 0) return "0 MB";
-        const totalBytes = files.reduce((total, file) => total + file.size, 0);
+        const filesToCalculate = isSearching ? searchResults : files;
+        if (filesToCalculate.length === 0) return "0 MB";
+        const totalBytes = filesToCalculate.reduce((total, file) => total + file.size, 0);
         if (totalBytes < 1048576) return (totalBytes / 1024).toFixed(2) + " KB";
         if (totalBytes < 1073741824) return (totalBytes / 1048576).toFixed(2) + " MB";
         return (totalBytes / 1073741824).toFixed(2) + " GB";
     };
 
     // Filter and sort files
-    const filteredAndSortedFiles = files
-        .filter(file =>
-            file.originalname.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            file.tags.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase()))
-        )
+    const filteredAndSortedFiles = (isSearching ? searchResults : files)
         .sort((a, b) => {
             let comparison = 0;
             switch (sortBy) {
@@ -128,9 +215,7 @@ function DashboardContent() {
             return sortOrder === 'asc' ? comparison : -comparison;
         });
 
-    // Helper functions are removed since they're not used in this component
-    // They are likely used in child components that are imported
-
+    // Handle file deletion
     const handleDelete = async (fileId: string, fileName: string) => {
         if (!window.confirm(`Are you sure you want to delete "${fileName}"?`)) {
             return;
@@ -155,6 +240,7 @@ function DashboardContent() {
 
             if (response.data && response.data.success) {
                 setFiles(prevFiles => prevFiles.filter(f => f._id !== fileId));
+                setSearchResults(prevResults => prevResults.filter(f => f._id !== fileId));
             } else {
                 setError('Failed to delete file. Please try again.');
             }
@@ -184,8 +270,7 @@ function DashboardContent() {
         link.download = fileName;
         link.style.display = 'none';
 
-        // Add authorization header by opening in new window
-        window.open(downloadUrl, '_blank');
+
     };
 
     const handleRename = async (fileId: string, newName: string) => {
@@ -210,6 +295,11 @@ function DashboardContent() {
             if (response.data && response.data.success) {
                 setFiles(prevFiles =>
                     prevFiles.map(f =>
+                        f._id === fileId ? { ...f, originalname: newName } : f
+                    )
+                );
+                setSearchResults(prevResults =>
+                    prevResults.map(f =>
                         f._id === fileId ? { ...f, originalname: newName } : f
                     )
                 );
@@ -239,9 +329,19 @@ function DashboardContent() {
     };
 
     const handlePreview = (file: FileData) => {
-        // Open file in new tab for preview
-        const previewUrl = `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/files/download/${file._id}`;
-        window.open(previewUrl, '_blank');
+        // Find the index of the file in the filtered list
+        const fileIndex = filteredAndSortedFiles.findIndex(f => f._id === file._id);
+        setPreviewFile(file);
+        setPreviewFileIndex(fileIndex);
+        setPreviewModalOpen(true);
+    };
+
+    const handleNavigatePreview = (newIndex: number) => {
+        if (newIndex >= 0 && newIndex < filteredAndSortedFiles.length) {
+            const newFile = filteredAndSortedFiles[newIndex];
+            setPreviewFile(newFile);
+            setPreviewFileIndex(newIndex);
+        }
     };
 
     const handleMove = (fileId: string) => {
@@ -250,12 +350,14 @@ function DashboardContent() {
     };
 
     return (
-        <DashboardLayout>
+        <DashboardLayout onSearchResults={handleSearchResults} onClearSearch={clearSearchResults}>
             <div className="p-6">
                 {/* Header with search and controls */}
                 <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between mb-6">
                     <div>
-                        <h2 className="text-2xl font-bold text-gray-900">My Drive</h2>
+                        <h2 className="text-2xl font-bold text-gray-900">
+                            {isSearching ? 'Search Results' : 'My Drive'}
+                        </h2>
                         <div className="mt-2 flex flex-col sm:flex-row sm:flex-wrap sm:space-x-6 text-sm text-gray-500">
                             <div className="flex items-center">
                                 <span>Total Files: {filteredAndSortedFiles.length}</span>
@@ -263,26 +365,21 @@ function DashboardContent() {
                             <div className="flex items-center">
                                 <span>Storage Used: {calculateStorageUsed()}</span>
                             </div>
+                            {isSearching && (
+                                <div className="flex items-center">
+                                    <span>Search Type: {searchType === 'semantic' ? 'AI' : 'Keyword'}</span>
+                                </div>
+                            )}
                         </div>
                     </div>
                     <div className="mt-4 lg:mt-0 flex flex-col sm:flex-row gap-3">
-                        <div className="relative">
-                            <input
-                                type="text"
-                                placeholder="Search files..."
-                                value={searchTerm}
-                                onChange={(e) => setSearchTerm(e.target.value)}
-                                className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#18b26f] focus:border-[#18b26f] w-full sm:w-64"
-                            />
-                            <svg className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="m21 21-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                            </svg>
-                        </div>
                         <a
                             href="/upload"
-                            className="inline-flex items-center px-4 py-2 bg-[#18b26f] text-white text-sm font-medium rounded-lg hover:bg-[#149d5f] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#18b26f] transition-colors"
+                            className="inline-flex items-center px-5 py-3 bg-[#18b26f] text-white text-sm font-medium rounded-xl shadow-md hover:shadow-lg 
+                                   hover:bg-[#149d5f] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#18b26f] transition-all duration-300
+                                   transform hover:-translate-y-0.5"
                         >
-                            <svg className="mr-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg className="mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
                             </svg>
                             Upload
@@ -291,46 +388,68 @@ function DashboardContent() {
                 </div>
 
                 {/* Controls bar */}
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 p-4 bg-gray-50 rounded-lg">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 p-5 bg-white rounded-xl shadow-sm border border-gray-100 backdrop-blur-sm">
                     <div className="flex items-center space-x-4 mb-4 sm:mb-0">
-                        <div className="flex items-center space-x-2">
-                            <label className="text-sm font-medium text-gray-700">Sort by:</label>
-                            <select
-                                value={sortBy}
-                                onChange={(e) => setSortBy(e.target.value as 'name' | 'date' | 'size')}
-                                className="text-sm bg-white border-0 rounded-lg px-3 py-2 text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-[#18b26f] focus:ring-opacity-50 transition-all cursor-pointer"
-                            >
-                                <option value="date">Date</option>
-                                <option value="name">Name</option>
-                                <option value="size">Size</option>
-                            </select>
+                        <div className="flex items-center space-x-3">
+                            <label className="text-sm font-medium text-gray-700 flex items-center">
+                                <svg className="h-5 w-5 mr-1.5 text-[#18b26f]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 4h13M3 8h9m-9 4h6m4 0l4-4m0 0l4 4m-4-4v12" />
+                                </svg>
+                                Sort by:
+                            </label>
+                            <div className="relative">
+                                <select
+                                    value={sortBy}
+                                    onChange={(e) => setSortBy(e.target.value as 'name' | 'date' | 'size')}
+                                    className="appearance-none text-sm bg-white border border-gray-200 rounded-lg px-4 py-2.5 pr-10 
+                                             text-gray-700 hover:border-[#18b26f]/40 focus:border-[#18b26f] focus:outline-none 
+                                             focus:ring-2 focus:ring-[#18b26f]/30 transition-all cursor-pointer shadow-sm"
+                                >
+                                    <option value="date">Date</option>
+                                    <option value="name">Name</option>
+                                    <option value="size">Size</option>
+                                </select>
+                                <div className="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none text-gray-500">
+                                    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                                    </svg>
+                                </div>
+                            </div>
                             <button
                                 onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
-                                className="p-1 text-gray-500 hover:text-gray-700"
+                                className="p-2 text-gray-500 hover:text-[#18b26f] bg-white rounded-lg border border-gray-200 shadow-sm
+                                         hover:border-[#18b26f]/40 transition-all duration-300"
                                 title={`Sort ${sortOrder === 'asc' ? 'descending' : 'ascending'}`}
                             >
-                                <svg className={`h-4 w-4 transform ${sortOrder === 'desc' ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <svg className={`h-4 w-4 transform transition-transform duration-300 ${sortOrder === 'desc' ? 'rotate-180' : ''}`}
+                                    fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 14l-7 7m0 0l-7-7m7 7V3" />
                                 </svg>
                             </button>
                         </div>
                     </div>
-                    <div className="flex items-center space-x-2">
+                    <div className="flex items-center space-x-3">
                         <button
                             onClick={() => setViewMode('list')}
-                            className={`p-2 rounded-md ${viewMode === 'list' ? 'bg-[#18b26f] text-white' : 'text-gray-500 hover:text-gray-700'}`}
+                            className={`p-2.5 rounded-xl transition-all duration-300 shadow-sm ${viewMode === 'list'
+                                ? 'bg-gradient-to-r from-[#18b26f] to-[#149d5f] text-white shadow-md'
+                                : 'bg-white text-gray-500 hover:text-[#18b26f] hover:bg-[#e6f5ee]'
+                                }`}
                             title="List view"
                         >
-                            <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 10h16M4 14h16M4 18h16" />
                             </svg>
                         </button>
                         <button
                             onClick={() => setViewMode('grid')}
-                            className={`p-2 rounded-md ${viewMode === 'grid' ? 'bg-[#18b26f] text-white' : 'text-gray-500 hover:text-gray-700'}`}
+                            className={`p-2.5 rounded-xl transition-all duration-300 shadow-sm ${viewMode === 'grid'
+                                ? 'bg-gradient-to-r from-[#18b26f] to-[#149d5f] text-white shadow-md'
+                                : 'bg-white text-gray-500 hover:text-[#18b26f] hover:bg-[#e6f5ee]'
+                                }`}
                             title="Grid view"
                         >
-                            <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
                             </svg>
                         </button>
@@ -348,7 +467,7 @@ function DashboardContent() {
                 {error && (
                     <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-6">
                         <div className="flex items-center">
-                            <svg className="h-5 w-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                            <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
                                 <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
                             </svg>
                             {error}
@@ -364,17 +483,19 @@ function DashboardContent() {
                         </svg>
                         <h3 className="text-lg font-medium text-gray-900 mb-2">No files found</h3>
                         <p className="text-gray-500 mb-6">
-                            {searchTerm ? `No files match "${searchTerm}"` : "Upload some files to get started!"}
+                            {isSearching ? 'No files match your search criteria' : "Upload some files to get started!"}
                         </p>
-                        <a
-                            href="/upload"
-                            className="inline-flex items-center px-4 py-2 bg-[#18b26f] text-white text-sm font-medium rounded-lg hover:bg-[#149d5f]"
-                        >
-                            <svg className="mr-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
-                            </svg>
-                            Upload Files
-                        </a>
+                        {!isSearching && (
+                            <a
+                                href="/upload"
+                                className="inline-flex items-center px-4 py-2 bg-[#18b26f] text-white text-sm font-medium rounded-lg hover:bg-[#149d5f]"
+                            >
+                                <svg className="mr-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
+                                </svg>
+                                Upload Files
+                            </a>
+                        )}
                     </div>
                 )}
 
@@ -392,6 +513,7 @@ function DashboardContent() {
                                 onShare={handleShare}
                                 onPreview={handlePreview}
                                 onMove={handleMove}
+                                searchType={searchType}
                             />
                         ) : (
                             /* Grid View */
@@ -416,7 +538,7 @@ function DashboardContent() {
                 )}
 
                 {/* Pagination */}
-                {pagination && pagination.totalPages > 1 && (
+                {pagination && pagination.totalPages > 1 && !isSearching && (
                     <div className="flex justify-center mt-8">
                         <nav className="flex items-center space-x-2">
                             <button
@@ -541,6 +663,39 @@ function DashboardContent() {
                     </div>
                 )}
             </div>
+
+            {/* File Preview Modal */}
+            <FilePreviewModal
+                file={previewFile}
+                isOpen={previewModalOpen}
+                onClose={() => {
+                    setPreviewModalOpen(false);
+                    setPreviewFile(null);
+                    setPreviewFileIndex(-1);
+                }}
+                onDownload={handleDownload}
+                onShare={handleShare}
+                onDelete={(fileId, fileName) => {
+                    handleDelete(fileId, fileName);
+                    // Close modal after delete
+                    setPreviewModalOpen(false);
+                    setPreviewFile(null);
+                    setPreviewFileIndex(-1);
+                }}
+                onRename={(fileId, newName) => {
+                    handleRename(fileId, newName);
+                    // Update the preview file with new name if it's still the same file
+                    if (previewFile && previewFile._id === fileId) {
+                        setPreviewFile({
+                            ...previewFile,
+                            originalname: newName
+                        });
+                    }
+                }}
+                allFiles={filteredAndSortedFiles}
+                currentIndex={previewFileIndex}
+                onNavigate={handleNavigatePreview}
+            />
         </DashboardLayout>
     );
 }

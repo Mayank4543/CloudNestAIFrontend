@@ -210,7 +210,9 @@ const DashboardFileTable: React.FC<DashboardFileTableProps> = ({
             >
                 {/* Preview option */}
                 <button
-                    onClick={() => {
+                    onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
                         onPreview(file);
                         setActiveDropdown(null);
                         setActiveShareSubmenu(null);
@@ -377,7 +379,9 @@ const DashboardFileTable: React.FC<DashboardFileTableProps> = ({
 
                 {/* Summarise with AI option */}
                 <button
-                    onClick={() => {
+                    onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
                         setSelectedFileForSummary(file);
                         setSummarizeModalOpen(true);
                         setActiveDropdown(null);

@@ -223,7 +223,7 @@ const ShareModal: React.FC<ShareModalProps> = ({
             const err = error as ApiError;
             if (err.response?.status === 401) {
                 alert('Authentication error. Please log in.');
-                
+
             } else {
                 const frontendHost = window.location.origin;
                 const fallbackLink = `${frontendHost}/files/preview/${fileId}`;

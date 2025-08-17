@@ -100,8 +100,8 @@ const SemanticSearch: React.FC<SemanticSearchProps> = ({ initialQuery = '', onRe
             onClick={performSearch}
             disabled={loading}
             className={`px-6 py-3 text-white font-medium rounded-lg shadow-sm ${loading
-                ? 'bg-blue-400 cursor-not-allowed'
-                : 'bg-blue-600 hover:bg-blue-700'
+              ? 'bg-blue-400 cursor-not-allowed'
+              : 'bg-blue-600 hover:bg-blue-700'
               } transition-colors duration-200`}
           >
             {loading ? (

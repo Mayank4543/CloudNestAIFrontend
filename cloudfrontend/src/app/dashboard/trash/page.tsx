@@ -237,20 +237,36 @@ export default function TrashPage() {
 
     return (
         <DashboardLayout>
-            <div className="p-6">
-                <div className="flex items-center justify-between mb-6">
+            <div className="p-4 sm:p-6">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 gap-4">
                     <div>
-                        <h1 className="text-2xl font-semibold text-gray-800">Trash</h1>
-                        <p className="text-sm text-gray-500 mt-1">
+                        <h1 className="text-xl sm:text-2xl font-semibold text-gray-800">Trash</h1>
+                        <p className="text-xs sm:text-sm text-gray-500 mt-1">
                             Files in trash will be automatically deleted after 30 days
                         </p>
                     </div>
                     {files.length > 0 && (
                         <button
                             onClick={handleEmptyTrash}
-                            className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors duration-200"
+                            className="group relative inline-flex items-center justify-center px-4 sm:px-6 py-2.5 sm:py-3 
+                                     bg-gradient-to-r from-red-500 to-red-600 text-white text-sm font-medium 
+                                     rounded-xl shadow-lg hover:shadow-xl transform hover:scale-105 
+                                     transition-all duration-300 ease-out hover:from-red-600 hover:to-red-700
+                                     focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2
+                                     w-full sm:w-auto"
                         >
-                            Empty Trash
+                            <svg
+                                className="w-4 h-4 mr-2 transition-transform duration-300 group-hover:rotate-12"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                            >
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                            <span className="relative">
+                                Empty Trash
+                                <span className="absolute inset-0 rounded-xl bg-white opacity-0 group-hover:opacity-20 transition-opacity duration-300"></span>
+                            </span>
                         </button>
                     )}
                 </div>

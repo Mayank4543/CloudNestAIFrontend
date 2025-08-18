@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Toast from '@/component/common/Toast';
 
 // API Base URL from environment variables
@@ -19,6 +19,10 @@ export default function LoginForm() {
     const [toastMessage, setToastMessage] = useState('');
     const [toastType, setToastType] = useState<'success' | 'error'>('success');
     const router = useRouter();
+    const searchParams = useSearchParams();
+
+    // Check if this is a mobile session
+    const isMobileSession = searchParams.get('mobile') === 'true';
 
     const showToastMessage = useCallback((message: string, type: 'success' | 'error') => {
         setToastMessage(message);
@@ -57,6 +61,11 @@ export default function LoginForm() {
                     const storage = rememberMe ? localStorage : sessionStorage;
                     storage.setItem('authToken', data.data.token);
                     storage.setItem('userSession', 'true');
+                    
+                    // Store mobile session if applicable
+                    if (isMobileSession) {
+                        storage.setItem('mobile-session', 'true');
+                    }
 
                     // Show success toast
                     showToastMessage('Google login successful! Redirecting...', 'success');
@@ -150,6 +159,11 @@ export default function LoginForm() {
                 // Store the token in localStorage or sessionStorage based on remember me
                 const storage = rememberMe ? localStorage : sessionStorage;
                 storage.setItem('authToken', data.data.token);
+                
+                // Store mobile session if applicable
+                if (isMobileSession) {
+                    storage.setItem('mobile-session', 'true');
+                }
 
                 // Show success toast
                 showToastMessage('Login successful! Redirecting...', 'success');
@@ -289,10 +303,21 @@ export default function LoginForm() {
                     </div>
                 </div>                <p className="mt-6 text-center text-sm text-gray-600">
                     Don&apos;t have an account?{' '}
-                    <Link href="/auth/register" className="text-[#18b26f] hover:text-[#149d5f] font-medium">
+                    <Link 
+                        href={`/auth/register${isMobileSession ? '?mobile=true' : ''}`} 
+                        className="text-[#18b26f] hover:text-[#149d5f] font-medium"
+                    >
                         Register here
                     </Link>
                 </p>
+
+                {!isMobileSession && (
+                    <p className="mt-4 text-center text-sm text-gray-600">
+                        <Link href="/" className="text-[#18b26f] hover:text-[#149d5f] font-medium">
+                            ← Back to Home
+                        </Link>
+                    </p>
+                )}
 
                 <div className="mt-4 text-center text-xs text-gray-500">
                     <p>Admin access: admin@cloudnest.ai / admin123</p>

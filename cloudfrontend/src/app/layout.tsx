@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import ConditionalNavbar from "../component/Navigation/ConditionalNavbar";
 import ConditionalFooter from "../component/Navigation/ConditionalFooter";
+import PWAInstallPrompt from "../component/common/PWAInstallPrompt";
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
@@ -98,6 +99,7 @@ export default function RootLayout({
           {children}
         </main>
         <ConditionalFooter />
+        <PWAInstallPrompt />
       </body>
     </html>
   );

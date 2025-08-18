@@ -1,22 +1,21 @@
 import type { NextConfig } from "next";
-import withPWA from "next-pwa";
 import dotenv from "dotenv";
 
 dotenv.config(); // Loads .env.local
 
-const nextConfig = {
+const nextConfig: NextConfig = {
   reactStrictMode: true,
   images: {
-    domains: ["lh3.googleusercontent.com"], // <-- yeh add kiya
+    domains: ["lh3.googleusercontent.com"],
   },
-  // Any other config...
 };
 
-export default withPWA({
+// PWA configuration with proper typing
+const withPWA = require("next-pwa")({
   dest: "public",
   register: true,
   skipWaiting: true,
-  disable: process.env.NODE_ENV === "development", // Disable PWA in development
+  disable: process.env.NODE_ENV === "development",
   runtimeCaching: [
     {
       urlPattern: /^https?.*/,
@@ -30,4 +29,6 @@ export default withPWA({
       },
     },
   ],
-})(nextConfig);
+});
+
+export default withPWA(nextConfig);

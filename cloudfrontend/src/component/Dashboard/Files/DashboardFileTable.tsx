@@ -262,7 +262,8 @@ const DashboardFileTable: React.FC<DashboardFileTableProps> = ({
 
                 {/* Open in new tab option */}
                 <button
-                    onClick={() => {
+                    onClick={(e) => {
+                        e.stopPropagation(); // Prevent event bubbling
                         if (file.url) {
                             window.open(file.url);
                         }
@@ -277,7 +278,8 @@ const DashboardFileTable: React.FC<DashboardFileTableProps> = ({
                     <span className="font-medium">Open in new tab</span>
                 </button>                {/* Download option */}
                 <button
-                    onClick={() => {
+                    onClick={(e) => {
+                        e.stopPropagation(); // Prevent event bubbling
                         onDownload(file._id, file.originalname);
                         setActiveDropdown(null);
                         setActiveShareSubmenu(null);
@@ -292,7 +294,8 @@ const DashboardFileTable: React.FC<DashboardFileTableProps> = ({
 
                 {/* Rename option */}
                 <button
-                    onClick={() => {
+                    onClick={(e) => {
+                        e.stopPropagation(); // Prevent event bubbling
                         const newName = prompt('Enter new name:', file.originalname);
                         if (newName && newName !== file.originalname) {
                             onRename(file._id, newName);
@@ -311,7 +314,8 @@ const DashboardFileTable: React.FC<DashboardFileTableProps> = ({
 
                 {/* Make a copy option */}
                 <button
-                    onClick={() => {
+                    onClick={(e) => {
+                        e.stopPropagation(); // Prevent event bubbling
                         onCopy(file._id);
                         setActiveDropdown(null);
                         setActiveShareSubmenu(null);
@@ -381,8 +385,10 @@ const DashboardFileTable: React.FC<DashboardFileTableProps> = ({
 
                         <button
                             className="flex items-center w-full px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-100"
-                            onClick={() => { copyPrivateLink(file) }}
-
+                            onClick={(e) => { 
+                                e.stopPropagation(); // Prevent event bubbling
+                                copyPrivateLink(file);
+                            }}
                         >
                             <svg className="w-4 h-4 mr-3 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
@@ -397,7 +403,8 @@ const DashboardFileTable: React.FC<DashboardFileTableProps> = ({
 
                 {/* Move to folder option */}
                 <button
-                    onClick={() => {
+                    onClick={(e) => {
+                        e.stopPropagation(); // Prevent event bubbling
                         handleMoveFile(file._id);
                         setActiveDropdown(null);
                         setActiveShareSubmenu(null);
@@ -431,7 +438,8 @@ const DashboardFileTable: React.FC<DashboardFileTableProps> = ({
 
                 {/* Move to trash option */}
                 <button
-                    onClick={() => {
+                    onClick={(e) => {
+                        e.stopPropagation(); // Prevent event bubbling
                         onDelete(file._id, file.originalname);
                         setActiveDropdown(null);
                         setActiveShareSubmenu(null);
@@ -531,7 +539,7 @@ const DashboardFileTable: React.FC<DashboardFileTableProps> = ({
                                                     title={`Tag: ${file.tags[0]}${file.tags.length > 1 ? ` (+${file.tags.length - 1} more)` : ''}`}
                                                     onClick={(e) => {
                                                         e.stopPropagation();
-                                                        console.log('All tags:', file.tags);
+                                                       
                                                     }}
                                                 >
                                                     <svg className="w-3 h-3 mr-1 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
@@ -642,7 +650,7 @@ const DashboardFileTable: React.FC<DashboardFileTableProps> = ({
                                                 className="inline-flex items-center text-sm font-bold text-blue-600"
                                                 onClick={(e) => {
                                                     e.stopPropagation();
-                                                    console.log('Tag clicked:', file.tags[0]);
+                                                   
                                                 }}
                                             >
                                                 #{file.tags[0].length > 15 ? `${file.tags[0].substring(0, 15)}...` : file.tags[0]}

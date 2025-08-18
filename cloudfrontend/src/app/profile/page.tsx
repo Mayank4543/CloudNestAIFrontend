@@ -31,20 +31,14 @@ function ProfileContent() {
     // Removed unused debugInfo state
 
     useEffect(() => {
-        console.log('ProfileContent component mounted');
+        
 
         // Gather debug info
         const authToken = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
         const userSession = localStorage.getItem('userSession') || sessionStorage.getItem('userSession');
 
         // Debug information now logged instead of stored in state
-        console.log('Auth debug:', {
-            hasAuthToken: !!authToken,
-            hasUserSession: !!userSession,
-            authTokenLength: authToken ? authToken.length : 0,
-            userSessionData: userSession ? JSON.parse(userSession) : null
-        });
-
+      
         fetchUserProfile();
     }, []);
 
@@ -55,7 +49,7 @@ function ProfileContent() {
 
             // Get auth token from localStorage or sessionStorage
             const authToken = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
-            console.log('Auth token found:', !!authToken);
+            
 
             if (!authToken) {
                 setError('No authentication token found');
@@ -63,7 +57,7 @@ function ProfileContent() {
                 return;
             }
 
-            console.log('Fetching profile from API...');
+         
             const response = await fetch('https://cloudnestaibackend.onrender.com/api/auth/profile', {
                 method: 'GET',
                 headers: {
@@ -72,13 +66,13 @@ function ProfileContent() {
                 },
             });
 
-            console.log('Response status:', response.status);
+           
             const data: ApiResponse = await response.json();
-            console.log('Response data:', data);
+          
 
             if (response.ok && data.success && data.data?.user) {
                 setProfile(data.data.user);
-                console.log('Profile set successfully:', data.data.user);
+               
             } else {
                 setError(data.message || `API Error: ${response.status} - Failed to fetch profile`);
                 console.error('API error:', data);
@@ -215,9 +209,7 @@ function ProfileContent() {
                                         priority
                                         crossOrigin="anonymous"
                                         referrerPolicy="no-referrer"
-                                        onLoad={() => {
-                                            console.log('Profile image loaded successfully:', getOptimizedImageUrl(profile.picture || profile.profilePicture));
-                                        }}
+                                        
                                         onError={(e) => {
                                             // Fallback to initials if image fails to load
                                             console.error('Profile image failed to load:', getOptimizedImageUrl(profile.picture || profile.profilePicture));

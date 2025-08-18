@@ -127,7 +127,7 @@ export default function LoginForm() {
                 return;
             }
 
-            console.log('Making API call to login...');
+        
 
             // Call backend API for authentication
             const response = await fetch(`${API_BASE_URL}/api/auth/login`, {
@@ -142,10 +142,10 @@ export default function LoginForm() {
             });
 
             const data = await response.json();
-            console.log('API Response:', data);
+          
 
             if (response.ok && data.success && data.data?.token) {
-                console.log('Login successful, storing token...');
+            
 
                 // Store the token in localStorage or sessionStorage based on remember me
                 const storage = rememberMe ? localStorage : sessionStorage;
@@ -155,29 +155,29 @@ export default function LoginForm() {
                 showToastMessage('Login successful! Redirecting...', 'success');
                 setIsLoading(false);
 
-                console.log('Preparing to redirect...');
+                
 
                 // Check if user is admin based on email or response data
                 if (email === 'admin@cloudnest.ai' || data.data.user?.role === 'admin') {
                     storage.setItem('adminSession', 'true');
-                    console.log('Redirecting to admin in 1.5 seconds...');
+                   
                     // Redirect after showing success message
                     setTimeout(() => {
-                        console.log('Now redirecting to /admin');
+                        
                         router.push('/admin');
                     }, 1500);
                 } else {
                     storage.setItem('userSession', 'true');
-                    console.log('Redirecting to dashboard in 1.5 seconds...');
+                   
                     // Redirect after showing success message
                     setTimeout(() => {
-                        console.log('Now redirecting to /dashboard');
+                       
                         router.push('/dashboard');
                     }, 1500);
                 }
                 return; // Important: return here to prevent further execution
             } else {
-                console.log('Login failed:', data.message);
+              
                 showToastMessage(data.message || 'Invalid email or password', 'error');
                 setIsLoading(false);
             }

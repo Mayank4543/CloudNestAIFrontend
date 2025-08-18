@@ -67,7 +67,10 @@ const MenuItem: React.FC<MenuItemProps> = ({
                     }
                     ${hasSubmenu ? 'pr-8' : ''}
                 `}
-                onClick={disabled ? undefined : onClick}
+                onClick={disabled ? undefined : (e) => {
+                    e?.stopPropagation();
+                    onClick?.();
+                }}
                 onMouseEnter={() => hasSubmenu && setShowSubmenu(true)}
                 onMouseLeave={() => hasSubmenu && setShowSubmenu(false)}
             >

@@ -25,26 +25,20 @@ const UploadForm: React.FC = () => {
 
     // Check auth status on mount
     useEffect(() => {
-        console.log('📋 UploadForm mounted - checking auth status...');
+       
 
         const token = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
         const userSession = localStorage.getItem('userSession') || sessionStorage.getItem('userSession');
 
-        console.log('📋 Upload Form Auth Status:', {
-            hasToken: !!token,
-            hasUserSession: !!userSession,
-            tokenLength: token?.length || 0,
-            tokenPreview: token ? `${token.substring(0, 30)}...` : 'NONE',
-            userSessionValue: userSession
-        });
+      
 
         // Also check all storage items to see what's there
-        console.log('🗄️ All localStorage items:');
+       
         for (let i = 0; i < localStorage.length; i++) {
             const key = localStorage.key(i);
             if (key) {
                 const value = localStorage.getItem(key);
-                console.log(`  ${key}:`, value?.substring(0, 50) + (value && value.length > 50 ? '...' : ''));
+                
             }
         }
     }, []);
@@ -58,32 +52,21 @@ const UploadForm: React.FC = () => {
 
     // Debug function to check authentication
     const checkAuthStatus = () => {
-        console.log('🔍 MANUAL AUTH CHECK TRIGGERED');
+    
 
         const localToken = localStorage.getItem('authToken');
         const sessionToken = sessionStorage.getItem('authToken');
         const localUserSession = localStorage.getItem('userSession');
         const sessionUserSession = sessionStorage.getItem('userSession');
 
-        console.log('🔍 Manual Auth Check - DETAILED:', {
-            localStorage: {
-                authToken: localToken ? `EXISTS (${localToken.length} chars)` : 'MISSING',
-                userSession: localUserSession ? `EXISTS (${localUserSession})` : 'MISSING'
-            },
-            sessionStorage: {
-                authToken: sessionToken ? `EXISTS (${sessionToken.length} chars)` : 'MISSING',
-                userSession: sessionUserSession ? `EXISTS (${sessionUserSession})` : 'MISSING'
-            },
-            finalToken: (localToken || sessionToken) ? 'AVAILABLE' : 'NOT AVAILABLE',
-            finalUserSession: (localUserSession || sessionUserSession) ? 'AVAILABLE' : 'NOT AVAILABLE'
-        });
+      
 
         // Test a simple authenticated request
         const testAuth = async () => {
             try {
-                console.log('🧪 Testing authentication with profile request...');
+               
                 const response = await api.auth.getProfile();
-                console.log('✅ Auth test SUCCESS:', response.data);
+              
                 showToastMessage('Authentication is working perfectly!', 'success');
             } catch (error: unknown) {
                 console.error('❌ Auth test FAILED:', error);
@@ -290,7 +273,7 @@ const UploadForm: React.FC = () => {
                 setUploadSuccess(true);
                 const successMsg = responseData.message || 'File uploaded successfully!';
                 showToastMessage(successMsg, 'success');
-                console.log('Upload response:', responseData);
+                
 
                 // Notify dashboard to refresh (for cross-tab communication)
                 localStorage.setItem('fileUploaded', Date.now().toString());

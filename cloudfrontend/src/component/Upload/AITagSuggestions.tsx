@@ -55,10 +55,10 @@ const AITagSuggestions: React.FC<AITagSuggestionsProps> = ({
 
     // Generate AI tags
     const generateAITags = async () => {
-        console.log('🚀 generateAITags called');
+      
 
         if (disabled || isLoading) {
-            console.log('❌ Skipping AI tagging - disabled or loading');
+           
             return;
         }
 
@@ -66,30 +66,16 @@ const AITagSuggestions: React.FC<AITagSuggestionsProps> = ({
         const token = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
         const userSession = localStorage.getItem('userSession') || sessionStorage.getItem('userSession');
 
-        console.log('🔍 COMPREHENSIVE AUTH CHECK:', {
-            hasToken: !!token,
-            tokenLength: token?.length || 0,
-            tokenPreview: token ? token.substring(0, 30) + '...' : 'NONE',
-            hasUserSession: !!userSession,
-            userSessionValue: userSession,
-            localStorage: {
-                authToken: localStorage.getItem('authToken') ? 'EXISTS' : 'MISSING',
-                userSession: localStorage.getItem('userSession') ? 'EXISTS' : 'MISSING'
-            },
-            sessionStorage: {
-                authToken: sessionStorage.getItem('authToken') ? 'EXISTS' : 'MISSING',
-                userSession: sessionStorage.getItem('userSession') ? 'EXISTS' : 'MISSING'
-            }
-        });
+       
 
         if (!token) {
-            console.log('❌ NO TOKEN FOUND - User must log in');
+          
             setError('Please log in to use AI tagging feature.');
             return;
         }
 
         if (!userSession) {
-            console.log('❌ NO USER SESSION FOUND - User must log in');
+           
             setError('Session expired. Please log in again.');
             return;
         }
@@ -99,9 +85,7 @@ const AITagSuggestions: React.FC<AITagSuggestionsProps> = ({
 
         try {
             const textContent = await extractTextFromFile(file);
-            console.log('📄 Extracted text content, length:', textContent.length);
-
-            console.log('🤖 About to make AI tagging request with authentication...');
+           
 
             // Make the API call
             const response = await api.files.testAITagging({
@@ -109,7 +93,7 @@ const AITagSuggestions: React.FC<AITagSuggestionsProps> = ({
                 filename: file.name
             });
 
-            console.log('✅ AI tagging response received:', response.data);
+           
 
             if (response.data.success && response.data.data.aiTaggingResult.success) {
                 const tags = response.data.data.aiTaggingResult.tags;
@@ -123,10 +107,10 @@ const AITagSuggestions: React.FC<AITagSuggestionsProps> = ({
                     setSelectedTags([]);
                     onTagsSelected([]);
                 }
-                console.log('✅ AI tagging successful, tags generated:', tags);
+                
             } else {
                 const errorMsg = response.data.data.aiTaggingResult.error || 'Failed to generate AI tags';
-                console.log('❌ AI tagging failed:', errorMsg);
+               
                 setError(errorMsg);
             }
         } catch (error: unknown) {
@@ -134,8 +118,7 @@ const AITagSuggestions: React.FC<AITagSuggestionsProps> = ({
 
             if (isAxiosError(error)) {
                 if (error.response?.status === 401) {
-                    console.log('❌ 401 UNAUTHORIZED - Authentication failed');
-                    console.log('Response data:', error.response.data);
+                   
                     setError('Authentication failed. Please refresh the page and log in again.');
 
                     // Clear potentially invalid tokens
@@ -144,15 +127,15 @@ const AITagSuggestions: React.FC<AITagSuggestionsProps> = ({
                     localStorage.removeItem('userSession');
                     sessionStorage.removeItem('userSession');
                 } else if (error.response?.status === 403) {
-                    console.log('❌ 403 FORBIDDEN - Access denied');
+                    
                     setError('Access denied. Please check your permissions.');
                 } else {
                     const errorMessage = error.response?.data?.message || 'Failed to generate AI tags. Please try again.';
-                    console.log('❌ API Error:', error.response?.status, errorMessage);
+                   
                     setError(errorMessage);
                 }
             } else {
-                console.log('❌ Non-HTTP Error:', error instanceof Error ? error.message : 'Unknown error');
+                
                 setError('Network error. Please check your connection and try again.');
             }
         } finally {

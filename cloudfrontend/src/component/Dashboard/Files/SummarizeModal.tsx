@@ -172,18 +172,13 @@ const SummarizeModal: React.FC<SummarizeModalProps> = ({ file, isOpen, onClose }
         setError('');
         setSummary('');
 
-        console.log('🔍 Starting summarization for file:', {
-            id: file._id,
-            originalname: file.originalname,
-            filename: file.filename
-        });
-
+      
         try {
             // First try to get existing summary
             let response;
             try {
                 response = await api.files.getSummary(file._id);
-                console.log('✅ Found existing summary:', response.data);
+              
 
                 if (response.data.success) {
                     setSummary(response.data.data.summary);
@@ -195,7 +190,7 @@ const SummarizeModal: React.FC<SummarizeModalProps> = ({ file, isOpen, onClose }
 
             // Generate new summary if none exists
             response = await api.files.summarize(file._id);
-            console.log('✅ Summarize response:', response.data);
+           
 
             if (response.data.success) {
                 setSummary(response.data.data.summary);

@@ -15,6 +15,7 @@ interface FileData {
     createdAt: string;
     updatedAt: string;
     url?: string;
+    starred?: boolean;
     owner?: {
         name: string;
         email: string;
@@ -30,6 +31,7 @@ interface FileItemProps {
     onShare?: (fileId: string) => void;
     onPreview?: (file: FileData) => void;
     onMove?: (fileId: string) => void;
+    onToggleStar?: (fileId: string) => void;
     viewMode?: 'list' | 'grid';
 }
 
@@ -131,6 +133,7 @@ const FileItem: React.FC<FileItemProps> = ({
     onShare,
     onPreview,
     onMove,
+    onToggleStar,
     viewMode = 'list'
 }) => {
     const [isHovered, setIsHovered] = useState(false);
@@ -164,9 +167,19 @@ const FileItem: React.FC<FileItemProps> = ({
                         onShare={onShare}
                         onPreview={onPreview}
                         onMove={onMove}
+                        onToggleStar={onToggleStar}
                         isParentHovered={isHovered}
                     />
                 </div>
+
+                {/* Star Icon Indicator */}
+                {file.starred && (
+                    <div className="absolute top-2 left-2 z-10">
+                        <svg className="w-5 h-5 text-yellow-500" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" />
+                        </svg>
+                    </div>
+                )}
 
                 <div className="flex flex-col items-center">
                     <div className="h-16 w-16 bg-[#e6f5ee] text-[#18b26f] rounded-lg flex items-center justify-center mb-3">
@@ -226,8 +239,13 @@ const FileItem: React.FC<FileItemProps> = ({
                         {getFileIcon(file.mimetype)}
                     </div>
                     <div className="ml-4 flex-grow">
-                        <div className="text-sm font-medium text-gray-900 max-w-xs truncate">
+                        <div className="text-sm font-medium text-gray-900 max-w-xs truncate flex items-center">
                             {file.originalname}
+                            {file.starred && (
+                                <svg className="ml-2 w-4 h-4 text-yellow-500 flex-shrink-0" fill="currentColor" viewBox="0 0 24 24">
+                                    <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" />
+                                </svg>
+                            )}
                         </div>
                         <div className="flex items-center space-x-2 mt-1">
                             <span className="text-xs text-gray-500">
@@ -288,6 +306,7 @@ const FileItem: React.FC<FileItemProps> = ({
                         onShare={onShare}
                         onPreview={onPreview}
                         onMove={onMove}
+                        onToggleStar={onToggleStar}
                         isParentHovered={isHovered}
                     />
                 </div>

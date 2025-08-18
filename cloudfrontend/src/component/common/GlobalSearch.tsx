@@ -230,33 +230,35 @@ const GlobalSearch: React.FC<GlobalSearchProps> = ({
                         value={query}
                         onChange={(e) => handleInputChange(e.target.value)}
                         placeholder={placeholder}
-                        className="block w-full text-black pl-10 pr-32 py-2 border border-gray-200 rounded-full leading-5 bg-gray-50 placeholder-gray-400 focus:outline-none focus:bg-white focus:border-[#18b26f] focus:ring-1 focus:ring-[#18b26f] sm:text-sm transition-all duration-150"
+                        className="block w-full text-black pl-10 pr-20 sm:pr-32 py-2 border border-gray-200 rounded-full leading-5 bg-gray-50 placeholder-gray-400 focus:outline-none focus:bg-white focus:border-[#18b26f] focus:ring-1 focus:ring-[#18b26f] text-xs sm:text-sm transition-all duration-150"
                     />
 
                     {/* Search Type Toggle */}
-                    <div className="absolute inset-y-0 right-0 flex items-center pr-2">
-                        <div className="flex items-center space-x-2">
+                    <div className="absolute inset-y-0 right-0 flex items-center pr-1 sm:pr-2">
+                        <div className="flex items-center space-x-1 sm:space-x-2">
                             {/* Segmented Control */}
-                            <div className="flex bg-gray-100 rounded-full p-1">
+                            <div className="flex bg-gray-100 rounded-full p-0.5 sm:p-1">
                                 <button
                                     type="button"
                                     onClick={() => setSearchType('keyword')}
-                                    className={`px-3 py-1 text-xs font-medium rounded-full transition-all duration-200 ${searchType === 'keyword'
+                                    className={`px-2 sm:px-3 py-0.5 sm:py-1 text-xs font-medium rounded-full transition-all duration-200 ${searchType === 'keyword'
                                         ? 'bg-white text-gray-900 shadow-sm'
                                         : 'text-gray-600 hover:text-gray-900'
                                         }`}
                                 >
-                                    Keyword
+                                    <span className="hidden sm:inline">Keyword</span>
+                                    <span className="sm:hidden">Key</span>
                                 </button>
                                 <button
                                     type="button"
                                     onClick={() => setSearchType('semantic')}
-                                    className={`px-3 py-1 text-xs font-medium rounded-full transition-all duration-200 ${searchType === 'semantic'
+                                    className={`px-2 sm:px-3 py-0.5 sm:py-1 text-xs font-medium rounded-full transition-all duration-200 ${searchType === 'semantic'
                                         ? 'bg-white text-gray-900 shadow-sm'
                                         : 'text-gray-600 hover:text-gray-900'
                                         }`}
                                 >
-                                    AI
+                                    <span className="hidden sm:inline">AI</span>
+                                    <span className="sm:hidden">AI</span>
                                 </button>
                             </div>
 
@@ -264,13 +266,13 @@ const GlobalSearch: React.FC<GlobalSearchProps> = ({
                             <button
                                 type="button"
                                 onClick={() => setIncludePublic(!includePublic)}
-                                className={`p-1.5 rounded-full transition-all duration-200 ${includePublic
+                                className={`p-1 sm:p-1.5 rounded-full transition-all duration-200 ${includePublic
                                     ? 'bg-blue-100 text-blue-600'
                                     : 'bg-gray-100 text-gray-400 hover:text-gray-600'
                                     }`}
                                 title={includePublic ? 'Include public files' : 'Exclude public files'}
                             >
-                                <span className="text-sm">🌐</span>
+                                <span className="text-xs sm:text-sm">🌐</span>
                             </button>
                         </div>
                     </div>
@@ -288,10 +290,10 @@ const GlobalSearch: React.FC<GlobalSearchProps> = ({
             {query && (
                 <button
                     onClick={clearSearch}
-                    className="absolute top-1/2 right-36 transform -translate-y-1/2 p-1 text-gray-400 hover:text-gray-600 transition-colors"
+                    className="absolute top-1/2 right-20 sm:right-36 transform -translate-y-1/2 p-1 text-gray-400 hover:text-gray-600 transition-colors"
                     title="Clear search"
                 >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="w-3 h-3 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
                     </svg>
                 </button>

@@ -79,10 +79,9 @@ const DashboardTopNavbar: React.FC<DashboardTopNavbarProps> = ({ onMenuButtonCli
 
             if (response.ok) {
                 const data = await response.json();
-                console.log('TopNavbar API response:', data);
+                
                 if (data.success && data.data?.user) {
-                    console.log('TopNavbar setting user profile:', data.data.user);
-                    console.log('TopNavbar picture field:', data.data.user.picture);
+                   
                     setUserProfile(data.data.user);
                 }
             }
@@ -127,14 +126,17 @@ const DashboardTopNavbar: React.FC<DashboardTopNavbarProps> = ({ onMenuButtonCli
 
     return (
         <header className="bg-white border-b border-gray-200 shadow-sm z-10 font-['Inter',system-ui,sans-serif]">
-            <div className="px-4 sm:px-6 lg:px-8">
+            <div className="px-2 sm:px-4 lg:px-8">
                 <div className="flex justify-between h-16">
-                    <div className="flex items-center">
-                        <div className="flex-shrink-0 flex items-center md:hidden">
+                    <div className="flex items-center flex-1">
+                        <div className="flex-shrink-0 flex items-center md:hidden mr-3">
                             <button
                                 type="button"
-                                className="inline-flex items-center justify-center p-2 rounded-full text-gray-500 hover:text-gray-700 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-[#18b26f] transition-all duration-150"
-                                onClick={onMenuButtonClick}
+                                className="inline-flex items-center justify-center p-2 rounded-md text-gray-500 hover:text-gray-700 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-[#18b26f] transition-all duration-150 border border-gray-300"
+                                onClick={() => {
+                                   
+                                    onMenuButtonClick();
+                                }}
                                 aria-label="Open sidebar"
                             >
                                 <svg
@@ -155,7 +157,7 @@ const DashboardTopNavbar: React.FC<DashboardTopNavbarProps> = ({ onMenuButtonCli
                             </button>
                         </div>
 
-                        <div className="flex items-center flex-1">
+                        <div className="flex items-center flex-1 min-w-0">
                             <div className="max-w-2xl w-full">
                                 <GlobalSearch
                                     onSearchResults={onSearchResults}
@@ -167,9 +169,9 @@ const DashboardTopNavbar: React.FC<DashboardTopNavbarProps> = ({ onMenuButtonCli
                     </div>
 
                     <div className="flex items-center">
-                        <div className="hidden md:ml-4 md:flex-shrink-0 md:flex md:items-center space-x-1">
+                        <div className="flex items-center space-x-1">
                             <button
-                                className="p-2 rounded-full text-gray-500 hover:text-gray-700 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#18b26f] transition-all duration-150"
+                                className="p-2 rounded-full text-gray-500 hover:text-gray-700 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#18b26f] transition-all duration-150 hidden sm:block"
                                 aria-label="Notifications"
                             >
                                 <svg
@@ -207,9 +209,7 @@ const DashboardTopNavbar: React.FC<DashboardTopNavbarProps> = ({ onMenuButtonCli
                                             className="h-9 w-9 rounded-full object-cover"
                                             crossOrigin="anonymous"
                                             referrerPolicy="no-referrer"
-                                            onLoad={() => {
-                                                console.log('TopNavbar image loaded:', getOptimizedImageUrl(userProfile?.picture || userProfile?.profilePicture));
-                                            }}
+                                            
                                             onError={(e) => {
                                                 console.error('TopNavbar image failed to load:', getOptimizedImageUrl(userProfile?.picture || userProfile?.profilePicture));
                                                 const target = e.target as HTMLImageElement;
@@ -225,14 +225,14 @@ const DashboardTopNavbar: React.FC<DashboardTopNavbarProps> = ({ onMenuButtonCli
 
                                 {isUserMenuOpen && (
                                     <div
-                                        className="origin-top-right absolute right-0 mt-2 w-56 rounded-md shadow-lg py-1 bg-white ring-1 ring-black ring-opacity-5 focus:outline-none"
+                                        className="origin-top-right absolute right-0 mt-2 w-56 rounded-md shadow-lg py-1 bg-white ring-1 ring-black ring-opacity-5 focus:outline-none z-50"
                                         role="menu"
                                         aria-orientation="vertical"
                                         aria-labelledby="user-menu"
                                     >
                                         {/* User Info */}
                                         <div className="px-4 py-3 border-b border-gray-100">
-                                            <p className="text-sm font-medium text-gray-900">
+                                            <p className="text-sm font-medium text-gray-900 truncate">
                                                 {userProfile?.name || 'User'}
                                             </p>
                                             <p className="text-sm text-gray-500 truncate">

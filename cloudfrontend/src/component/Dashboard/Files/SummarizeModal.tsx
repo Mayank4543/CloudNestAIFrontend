@@ -313,45 +313,45 @@ const SummarizeModal: React.FC<SummarizeModalProps> = ({ file, isOpen, onClose }
             />
 
             {/* Modal with Better Height Management */}
-            <div className="relative z-10 bg-white rounded-xl shadow-2xl w-full max-w-6xl mx-4 max-h-[95vh] flex flex-col overflow-hidden">
+            <div className="relative z-10 bg-white rounded-xl shadow-2xl w-full max-w-6xl mx-2 sm:mx-4 max-h-[95vh] flex flex-col overflow-hidden">
                 {/* Enhanced Header with Better Typography and Dark Mode */}
-                <div className={`flex-shrink-0 p-6 ${isDarkMode ? 'bg-gradient-to-r from-gray-800 via-gray-900 to-black' : 'bg-gradient-to-r from-blue-600 via-purple-600 to-blue-800'}`}>
+                <div className={`flex-shrink-0 p-3 sm:p-6 ${isDarkMode ? 'bg-gradient-to-r from-gray-800 via-gray-900 to-black' : 'bg-gradient-to-r from-blue-600 via-purple-600 to-blue-800'}`}>
                     <div className="flex items-center justify-between">
-                        <div className="flex items-center space-x-4">
-                            <div className="flex-shrink-0 w-12 h-12 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center">
-                                <svg className="w-7 h-7 text-white" fill="currentColor" viewBox="0 0 20 20">
+                        <div className="flex items-center space-x-2 sm:space-x-4">
+                            <div className="flex-shrink-0 w-8 h-8 sm:w-12 sm:h-12 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center">
+                                <svg className="w-5 h-5 sm:w-7 sm:h-7 text-white" fill="currentColor" viewBox="0 0 20 20">
                                     <path fillRule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2h-8a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clipRule="evenodd" />
                                 </svg>
                             </div>
-                            <div>
-                                <h2 className="text-2xl font-bold text-white">AI Document Summary</h2>
-                                <p className="text-blue-100 text-sm truncate max-w-md mt-1 font-medium">
+                            <div className="min-w-0 flex-1">
+                                <h2 className="text-lg sm:text-2xl font-bold text-white">AI Document Summary</h2>
+                                <p className="text-blue-100 text-xs sm:text-sm truncate max-w-[200px] sm:max-w-md mt-1 font-medium">
                                     {file?.originalname}
                                 </p>
                             </div>
                         </div>
 
-                        <div className="flex items-center space-x-3">
+                        <div className="flex items-center space-x-2 sm:space-x-3">
                             {/* Dark Mode Toggle */}
                             <button
                                 onClick={() => setIsDarkMode(!isDarkMode)}
-                                className="text-white/80 hover:text-white hover:bg-white/20 rounded-lg p-2 transition-all duration-200"
+                                className="text-white/80 hover:text-white hover:bg-white/20 rounded-lg p-1.5 sm:p-2 transition-all duration-200"
                                 title="Toggle Dark Mode"
                             >
                                 {isDarkMode ? (
-                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
                                     </svg>
                                 ) : (
-                                    <span className="text-lg">🌙</span>
+                                    <span className="text-sm sm:text-lg">🌙</span>
                                 )}
                             </button>
 
                             <button
                                 onClick={onClose}
-                                className="text-white/80 hover:text-white hover:bg-white/20 rounded-lg p-2 transition-all duration-200"
+                                className="text-white/80 hover:text-white hover:bg-white/20 rounded-lg p-1.5 sm:p-2 transition-all duration-200"
                             >
-                                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
                                 </svg>
                             </button>
@@ -360,20 +360,20 @@ const SummarizeModal: React.FC<SummarizeModalProps> = ({ file, isOpen, onClose }
 
                     {/* Enhanced AI Metadata with Confidence Reasoning */}
                     {structuredSummary && (
-                        <div className="mt-4">
-                            <div className="flex items-center space-x-6 text-sm text-blue-100">
+                        <div className="mt-3 sm:mt-4">
+                            <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-6 space-y-2 sm:space-y-0 text-xs sm:text-sm text-blue-100">
                                 <div className="flex items-center space-x-2">
                                     <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
                                     <span className="font-medium">AI Confidence: {structuredSummary.metadata.confidence}%</span>
                                 </div>
                                 <div className="flex items-center space-x-2">
-                                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                    <svg className="w-3 h-3 sm:w-4 sm:h-4" fill="currentColor" viewBox="0 0 20 20">
                                         <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd" />
                                     </svg>
-                                    <span>Generated: {structuredSummary.metadata.dateGenerated}</span>
+                                    <span className="truncate">Generated: {structuredSummary.metadata.dateGenerated}</span>
                                 </div>
                                 <div className="flex items-center space-x-2">
-                                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                    <svg className="w-3 h-3 sm:w-4 sm:h-4" fill="currentColor" viewBox="0 0 20 20">
                                         <path fillRule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2h-8a2 2 0 01-2-2V4z" clipRule="evenodd" />
                                     </svg>
                                     <span>{structuredSummary.metadata.wordCount} words</span>
@@ -432,15 +432,15 @@ const SummarizeModal: React.FC<SummarizeModalProps> = ({ file, isOpen, onClose }
                         <div className="flex flex-col h-full">
                             {/* Enhanced Quick Overview Section */}
                             {structuredSummary?.quickOverview && (
-                                <div className={`flex-shrink-0 p-4 border-b border-gray-100 ${isDarkMode ? 'bg-gradient-to-r from-gray-700 to-gray-800' : 'bg-gradient-to-r from-blue-50 to-purple-50'}`}>
+                                <div className={`flex-shrink-0 p-3 sm:p-4 border-b border-gray-100 ${isDarkMode ? 'bg-gradient-to-r from-gray-700 to-gray-800' : 'bg-gradient-to-r from-blue-50 to-purple-50'}`}>
                                     <div className="max-w-4xl">
-                                        <h3 className={`text-base font-bold mb-2 flex items-center ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>
-                                            <span className="w-6 h-6 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center mr-2 text-sm">
+                                        <h3 className={`text-sm sm:text-base font-bold mb-2 flex items-center ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>
+                                            <span className="w-5 h-5 sm:w-6 sm:h-6 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center mr-2 text-xs sm:text-sm">
                                                 📝
                                             </span>
                                             Quick Overview
                                         </h3>
-                                        <p className={`leading-relaxed text-base italic ${isDarkMode ? 'text-gray-200' : 'text-gray-600'}`}>
+                                        <p className={`leading-relaxed text-sm sm:text-base italic ${isDarkMode ? 'text-gray-200' : 'text-gray-600'}`}>
                                             &ldquo;{structuredSummary.quickOverview}&rdquo;
                                         </p>
                                     </div>
@@ -448,9 +448,9 @@ const SummarizeModal: React.FC<SummarizeModalProps> = ({ file, isOpen, onClose }
                             )}
 
                             {/* Content Area with All Cards */}
-                            <div className={`flex-1 p-4 ${isDarkMode ? 'bg-gray-900' : 'bg-gray-50'}`}>
+                            <div className={`flex-1 p-2 sm:p-4 ${isDarkMode ? 'bg-gray-900' : 'bg-gray-50'}`}>
                                 {structuredSummary && (
-                                    <div className="max-w-5xl mx-auto space-y-4"
+                                    <div className="max-w-5xl mx-auto space-y-3 sm:space-y-4"
                                         style={{ paddingBottom: '80px' }}>
                                         {/* Enhanced Overview Card */}
                                         {structuredSummary.overview && (
@@ -650,26 +650,28 @@ const SummarizeModal: React.FC<SummarizeModalProps> = ({ file, isOpen, onClose }
                             </div>
 
                             {/* Enhanced Floating Toolbar - Fixed at Bottom */}
-                            <div className={`flex-shrink-0 border-t p-3 ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}>
-                                <div className="flex items-center justify-center space-x-2 flex-wrap gap-2">
+                            <div className={`flex-shrink-0 border-t p-2 sm:p-3 ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}>
+                                <div className="flex items-center justify-center space-x-1 sm:space-x-2 flex-wrap gap-1 sm:gap-2">
                                     <button
                                         onClick={() => exportSummary('txt')}
-                                        className={`inline-flex items-center px-4 py-2 border rounded-lg shadow-sm text-sm font-medium transition-all duration-200 ${isDarkMode ? 'bg-gray-700 border-gray-600 text-gray-200 hover:bg-gray-600' : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'} focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2`}
+                                        className={`inline-flex items-center px-2 sm:px-4 py-1.5 sm:py-2 border rounded-lg shadow-sm text-xs sm:text-sm font-medium transition-all duration-200 ${isDarkMode ? 'bg-gray-700 border-gray-600 text-gray-200 hover:bg-gray-600' : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'} focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2`}
                                     >
-                                        <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <svg className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                                         </svg>
-                                        📥 TXT
+                                        <span className="hidden sm:inline">📥 TXT</span>
+                                        <span className="sm:hidden">TXT</span>
                                     </button>
 
                                     <button
                                         onClick={() => exportSummary('md')}
-                                        className={`inline-flex items-center px-4 py-2 border rounded-lg shadow-sm text-sm font-medium transition-all duration-200 ${isDarkMode ? 'bg-gray-700 border-gray-600 text-gray-200 hover:bg-gray-600' : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'} focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2`}
+                                        className={`inline-flex items-center px-2 sm:px-4 py-1.5 sm:py-2 border rounded-lg shadow-sm text-xs sm:text-sm font-medium transition-all duration-200 ${isDarkMode ? 'bg-gray-700 border-gray-600 text-gray-200 hover:bg-gray-600' : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'} focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2`}
                                     >
-                                        <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <svg className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
                                         </svg>
-                                        📄 MD
+                                        <span className="hidden sm:inline">📄 MD</span>
+                                        <span className="sm:hidden">MD</span>
                                     </button>
 
                                     <button
@@ -677,17 +679,18 @@ const SummarizeModal: React.FC<SummarizeModalProps> = ({ file, isOpen, onClose }
                                             setSummary('');
                                             handleSummarize();
                                         }}
-                                        className="inline-flex items-center px-5 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-medium rounded-lg hover:from-blue-700 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200 shadow-lg"
+                                        className="inline-flex items-center px-3 sm:px-5 py-1.5 sm:py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-medium rounded-lg hover:from-blue-700 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200 shadow-lg text-xs sm:text-sm"
                                     >
-                                        <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <svg className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                                         </svg>
-                                        🔄 Regenerate
+                                        <span className="hidden sm:inline">🔄 Regenerate</span>
+                                        <span className="sm:hidden">Regen</span>
                                     </button>
 
                                     <button
                                         onClick={copyAllContent}
-                                        className={`inline-flex items-center px-4 py-2 border rounded-lg shadow-sm text-sm font-medium transition-all duration-200 ${isDarkMode ? 'bg-gray-700 border-gray-600 text-gray-200 hover:bg-gray-600' : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'} focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2`}
+                                        className={`inline-flex items-center px-2 sm:px-4 py-1.5 sm:py-2 border rounded-lg shadow-sm text-xs sm:text-sm font-medium transition-all duration-200 ${isDarkMode ? 'bg-gray-700 border-gray-600 text-gray-200 hover:bg-gray-600' : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'} focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2`}
                                     >
                                         {copiedSection === 'all' ? (
                                             <>
@@ -738,4 +741,4 @@ const SummarizeModal: React.FC<SummarizeModalProps> = ({ file, isOpen, onClose }
     );
 };
 
-            export default SummarizeModal;
+export default SummarizeModal;

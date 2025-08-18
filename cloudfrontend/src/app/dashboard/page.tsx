@@ -26,6 +26,7 @@ interface FileData {
         email: string;
     };
     relevanceScore?: number; // For AI search results
+    starred?: boolean; // Track if file is starred
 }
 
 interface PaginationData {
@@ -52,6 +53,8 @@ function DashboardContent() {
     const [viewMode, setViewMode] = useState<'list' | 'grid'>('list');
     const [sortBy, setSortBy] = useState<'name' | 'date' | 'size'>('date');
     const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+    const [timeframe, setTimeframe] = useState<'all' | 'today' | 'week' | 'month' | 'year'>('all');
+    const [fileType, setFileType] = useState<'all' | 'images' | 'documents' | 'videos' | 'audio' | 'pdfs' | 'others'>('all');
     const [previewModalOpen, setPreviewModalOpen] = useState<boolean>(false);
     const [previewFile, setPreviewFile] = useState<FileData | null>(null);
     const [previewFileIndex, setPreviewFileIndex] = useState<number>(-1);
@@ -115,7 +118,17 @@ function DashboardContent() {
                         ...file,
                         tags: normalizeTags(file.tags)
                     }));
-                    setFiles(normalizedFiles);
+
+                    // Load starred files from localStorage
+                    const starredFiles = JSON.parse(localStorage.getItem('starredFiles') || '[]');
+
+                    // Mark files as starred based on localStorage data
+                    const filesWithStarred = normalizedFiles.map(file => ({
+                        ...file,
+                        starred: starredFiles.includes(file._id)
+                    }));
+
+                    setFiles(filesWithStarred);
                     setPagination(response.data.pagination);
                 } else {
                     setError(response.data.message || 'Failed to fetch files');
@@ -138,7 +151,7 @@ function DashboardContent() {
         // Listen for file uploads from other tabs/components
         const handleStorageChange = (e: StorageEvent) => {
             if (e.key === 'fileUploaded' && e.newValue) {
-                console.log('📁 File upload detected, refreshing dashboard...');
+
                 // Remove the flag
                 localStorage.removeItem('fileUploaded');
                 // Refresh the files
@@ -151,7 +164,7 @@ function DashboardContent() {
 
         // Also listen for custom events within the same tab
         const handleFileUpload = () => {
-            console.log('📁 File upload event detected, refreshing dashboard...');
+            ;
             fetchFiles();
         };
 
@@ -165,8 +178,7 @@ function DashboardContent() {
 
     // Handle search results from GlobalSearch component
     const handleSearchResults = (results: FileData[], type: 'keyword' | 'semantic') => {
-        console.log('Search results received:', results); // Debug log
-        console.log('Search type:', type); // Debug log
+
 
         // Normalize tags for search results
         const normalizedResults = results.map(file => ({
@@ -177,7 +189,7 @@ function DashboardContent() {
         setSearchResults(normalizedResults);
         setSearchType(type);
         setIsSearching(normalizedResults.length > 0);
-        console.log('Search state updated, isSearching:', normalizedResults.length > 0); // Debug log
+
     };
 
     // Clear search results when search is cleared
@@ -197,9 +209,72 @@ function DashboardContent() {
         return (totalBytes / 1073741824).toFixed(2) + " GB";
     };
 
+    // Filter files by timeframe
+    const filterByTimeframe = (files: FileData[]) => {
+        if (timeframe === 'all') return files;
+
+        const now = new Date();
+        const startDate = new Date();
+
+        switch (timeframe) {
+            case 'today':
+                startDate.setHours(0, 0, 0, 0);
+                break;
+            case 'week':
+                startDate.setDate(now.getDate() - 7);
+                break;
+            case 'month':
+                startDate.setMonth(now.getMonth() - 1);
+                break;
+            case 'year':
+                startDate.setFullYear(now.getFullYear() - 1);
+                break;
+        }
+
+        return files.filter(file => new Date(file.updatedAt) >= startDate);
+    };
+
+    // Filter files by type
+    const filterByType = (files: FileData[]) => {
+        if (fileType === 'all') return files;
+
+        return files.filter(file => {
+            const mimetype = file.mimetype.toLowerCase();
+            switch (fileType) {
+                case 'images':
+                    return mimetype.includes('image');
+                case 'documents':
+                    return mimetype.includes('document') || mimetype.includes('text') ||
+                        mimetype.includes('msword') || mimetype.includes('wordprocessingml');
+                case 'videos':
+                    return mimetype.includes('video');
+                case 'audio':
+                    return mimetype.includes('audio');
+                case 'pdfs':
+                    return mimetype.includes('pdf');
+                case 'others':
+                    return !mimetype.includes('image') && !mimetype.includes('document') &&
+                        !mimetype.includes('text') && !mimetype.includes('video') &&
+                        !mimetype.includes('audio') && !mimetype.includes('pdf') &&
+                        !mimetype.includes('msword') && !mimetype.includes('wordprocessingml');
+                default:
+                    return true;
+            }
+        });
+    };
+
     // Filter and sort files
-    const filteredAndSortedFiles = (isSearching ? searchResults : files)
-        .sort((a, b) => {
+    const filteredAndSortedFiles = (() => {
+        let fileList = isSearching ? searchResults : files;
+
+        // Apply timeframe filter
+        fileList = filterByTimeframe(fileList);
+
+        // Apply file type filter
+        fileList = filterByType(fileList);
+
+        // Apply sorting
+        return fileList.sort((a, b) => {
             let comparison = 0;
             switch (sortBy) {
                 case 'name':
@@ -214,6 +289,7 @@ function DashboardContent() {
             }
             return sortOrder === 'asc' ? comparison : -comparison;
         });
+    })();
 
     // Handle file deletion
     const handleDelete = async (fileId: string, fileName: string) => {
@@ -312,6 +388,62 @@ function DashboardContent() {
         }
     };
 
+    const handleToggleStar = async (fileId: string) => {
+        try {
+            // Find the file in state
+            const file = files.find(f => f._id === fileId) || searchResults.find(f => f._id === fileId);
+            if (!file) return;
+
+            // Toggle the starred state
+            const newStarredState = !file.starred;
+
+            // Update the file in state immediately for a responsive UI
+            setFiles(prevFiles =>
+                prevFiles.map(f =>
+                    f._id === fileId ? { ...f, starred: newStarredState } : f
+                )
+            );
+            setSearchResults(prevResults =>
+                prevResults.map(f =>
+                    f._id === fileId ? { ...f, starred: newStarredState } : f
+                )
+            );
+
+            // Store starred files in localStorage
+            const starredFiles = JSON.parse(localStorage.getItem('starredFiles') || '[]');
+            if (newStarredState) {
+                // Add to starred files if not already there
+                if (!starredFiles.includes(fileId)) {
+                    starredFiles.push(fileId);
+                }
+            } else {
+                // Remove from starred files
+                const index = starredFiles.indexOf(fileId);
+                if (index > -1) {
+                    starredFiles.splice(index, 1);
+                }
+            }
+            localStorage.setItem('starredFiles', JSON.stringify(starredFiles));
+
+            // You can also send this to your API if you want to persist it server-side
+            // const authToken = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
+            // if (authToken) {
+            //     await axios.patch(
+            //         `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/files/${fileId}`,
+            //         { starred: newStarredState },
+            //         {
+            //             headers: { 'Authorization': `Bearer ${authToken}` },
+            //         }
+            //     );
+            // }
+        } catch (err) {
+            console.error('Error toggling star:', err);
+            // Revert the state change on error
+            setFiles(prevFiles => [...prevFiles]);
+            setSearchResults(prevResults => [...prevResults]);
+        }
+    };
+
     const handleCopy = (fileId: string) => {
         // Copy file URL to clipboard
         const fileUrl = `${window.location.origin}/file/${fileId}`;
@@ -344,9 +476,9 @@ function DashboardContent() {
         }
     };
 
-    const handleMove = (fileId: string) => {
+    const handleMove = (_fileId: string) => {
         // Placeholder for move functionality
-        console.log('Move file functionality not yet implemented for ID:', fileId);
+        console.log('Move file functionality not yet implemented for ID:');
     };
 
     return (
@@ -372,7 +504,7 @@ function DashboardContent() {
                             )}
                         </div>
                     </div>
-                    <div className="mt-4 lg:mt-0 flex flex-col sm:flex-row gap-3">
+                    <div className="mt-4 lg:mt-0 hidden md:flex flex-col sm:flex-row gap-3">
                         <a
                             href="/upload"
                             className="inline-flex items-center px-5 py-3 bg-[#18b26f] text-white text-sm font-medium rounded-xl shadow-md hover:shadow-lg 
@@ -387,69 +519,279 @@ function DashboardContent() {
                     </div>
                 </div>
 
-                {/* Controls bar */}
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 p-5 bg-white rounded-xl shadow-sm border border-gray-100 backdrop-blur-sm">
-                    <div className="flex items-center space-x-4 mb-4 sm:mb-0">
-                        <div className="flex items-center space-x-3">
-                            <label className="text-sm font-medium text-gray-700 flex items-center">
-                                <svg className="h-5 w-5 mr-1.5 text-[#18b26f]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                {/* Controls bar - Single Row Layout (Desktop) & Chips (Mobile) */}
+                <div className="flex items-center justify-between gap-2 mb-6 p-3 sm:p-5 bg-white rounded-xl shadow-sm border border-gray-100 backdrop-blur-sm overflow-x-auto">
+                    {/* Left Side Controls - Desktop View */}
+                    <div className="hidden md:flex items-center gap-2 sm:gap-4 flex-shrink-0">
+                        {/* Sort By */}
+                        <div className="flex items-center space-x-2">
+                            <label className="text-xs sm:text-sm font-medium text-gray-700 flex items-center whitespace-nowrap">
+                                <svg className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-1.5 text-[#18b26f]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 4h13M3 8h9m-9 4h6m4 0l4-4m0 0l4 4m-4-4v12" />
                                 </svg>
-                                Sort by:
+                                <span className="hidden sm:inline">Sort by:</span>
+                                <span className="sm:hidden">Sort:</span>
                             </label>
                             <div className="relative">
                                 <select
                                     value={sortBy}
                                     onChange={(e) => setSortBy(e.target.value as 'name' | 'date' | 'size')}
-                                    className="appearance-none text-sm bg-white border border-gray-200 rounded-lg px-4 py-2.5 pr-10 
+                                    className="appearance-none text-xs sm:text-sm bg-white border border-gray-200 rounded-lg px-2 sm:px-3 py-1.5 sm:py-2 pr-6 sm:pr-8 
                                              text-gray-700 hover:border-[#18b26f]/40 focus:border-[#18b26f] focus:outline-none 
-                                             focus:ring-2 focus:ring-[#18b26f]/30 transition-all cursor-pointer shadow-sm"
+                                             focus:ring-2 focus:ring-[#18b26f]/30 transition-all cursor-pointer shadow-sm min-w-[70px] sm:min-w-[100px]"
                                 >
                                     <option value="date">Date</option>
                                     <option value="name">Name</option>
                                     <option value="size">Size</option>
                                 </select>
-                                <div className="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none text-gray-500">
-                                    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <div className="absolute inset-y-0 right-0 flex items-center px-1 sm:px-2 pointer-events-none text-gray-500">
+                                    <svg className="h-2.5 w-2.5 sm:h-3 sm:w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
                                     </svg>
                                 </div>
                             </div>
                             <button
                                 onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
-                                className="p-2 text-gray-500 hover:text-[#18b26f] bg-white rounded-lg border border-gray-200 shadow-sm
-                                         hover:border-[#18b26f]/40 transition-all duration-300"
+                                className="p-1.5 sm:p-2 text-gray-500 hover:text-[#18b26f] bg-white rounded-lg border border-gray-200 shadow-sm
+                                         hover:border-[#18b26f]/40 transition-all duration-300 flex-shrink-0"
                                 title={`Sort ${sortOrder === 'asc' ? 'descending' : 'ascending'}`}
                             >
-                                <svg className={`h-4 w-4 transform transition-transform duration-300 ${sortOrder === 'desc' ? 'rotate-180' : ''}`}
+                                <svg className={`h-3 w-3 sm:h-4 sm:w-4 transform transition-transform duration-300 ${sortOrder === 'desc' ? 'rotate-180' : ''}`}
                                     fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 14l-7 7m0 0l-7-7m7 7V3" />
                                 </svg>
                             </button>
                         </div>
+
+                        {/* Modified (Timeframe) Filter */}
+                        <div className="flex items-center space-x-2">
+                            <label className="text-xs sm:text-sm font-medium text-gray-700 flex items-center whitespace-nowrap">
+                                <svg className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-1.5 text-[#18b26f]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                                <span className="hidden sm:inline">Modified:</span>
+                                <span className="sm:hidden">Time:</span>
+                            </label>
+                            <div className="relative">
+                                <select
+                                    value={timeframe}
+                                    onChange={(e) => setTimeframe(e.target.value as typeof timeframe)}
+                                    className="appearance-none text-xs sm:text-sm bg-white border border-gray-200 rounded-lg px-2 sm:px-3 py-1.5 sm:py-2 pr-6 sm:pr-8 
+                                             text-gray-700 hover:border-[#18b26f]/40 focus:border-[#18b26f] focus:outline-none 
+                                             focus:ring-2 focus:ring-[#18b26f]/30 transition-all cursor-pointer shadow-sm min-w-[80px] sm:min-w-[120px]"
+                                >
+                                    <option value="all">Any time</option>
+                                    <option value="today">Today</option>
+                                    <option value="week">7 days</option>
+                                    <option value="month">30 days</option>
+                                    <option value="year">1 year</option>
+                                </select>
+                                <div className="absolute inset-y-0 right-0 flex items-center px-1 sm:px-2 pointer-events-none text-gray-500">
+                                    <svg className="h-2.5 w-2.5 sm:h-3 sm:w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                                    </svg>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* File Type Filter */}
+                        <div className="flex items-center space-x-2">
+                            <label className="text-xs sm:text-sm font-medium text-gray-700 flex items-center whitespace-nowrap">
+                                <svg className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-1.5 text-[#18b26f]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                                </svg>
+                                Type:
+                            </label>
+                            <div className="relative">
+                                <select
+                                    value={fileType}
+                                    onChange={(e) => setFileType(e.target.value as typeof fileType)}
+                                    className="appearance-none text-xs sm:text-sm bg-white border border-gray-200 rounded-lg px-2 sm:px-3 py-1.5 sm:py-2 pr-6 sm:pr-8 
+                                             text-gray-700 hover:border-[#18b26f]/40 focus:border-[#18b26f] focus:outline-none 
+                                             focus:ring-2 focus:ring-[#18b26f]/30 transition-all cursor-pointer shadow-sm min-w-[70px] sm:min-w-[120px]"
+                                >
+                                    <option value="all">All</option>
+                                    <option value="images">Images</option>
+                                    <option value="documents">Docs</option>
+                                    <option value="pdfs">PDFs</option>
+                                    <option value="videos">Videos</option>
+                                    <option value="audio">Audio</option>
+                                    <option value="others">Others</option>
+                                </select>
+                                <div className="absolute inset-y-0 right-0 flex items-center px-1 sm:px-2 pointer-events-none text-gray-500">
+                                    <svg className="h-2.5 w-2.5 sm:h-3 sm:w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                                    </svg>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Clear Filters Button - Desktop */}
+                        {(timeframe !== 'all' || fileType !== 'all') && (
+                            <button
+                                onClick={() => {
+                                    setTimeframe('all');
+                                    setFileType('all');
+                                }}
+                                className="text-xs sm:text-sm text-[#18b26f] hover:text-[#149d5f] font-medium transition-colors duration-200 flex items-center space-x-1 whitespace-nowrap px-2 py-1"
+                            >
+                                <svg className="h-3 w-3 sm:h-4 sm:w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                                <span className="hidden sm:inline">Clear</span>
+                            </button>
+                        )}
                     </div>
-                    <div className="flex items-center space-x-3">
+
+                    {/* Left Side Controls - Mobile View with Chips */}
+                    <div className="flex md:hidden flex-wrap items-center gap-2 flex-shrink-0">
+                        {/* Sort By - Chip Style */}
+                        <div className="relative">
+                            <button
+                                onClick={() => document.getElementById('sortDropdown')?.click()}
+                                className="flex items-center space-x-1 text-xs px-3 py-1.5 rounded-full border border-geen-200 
+                                    hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-[#18b26f]/20 shadow-sm transition-colors"
+                            >
+                                <span className="font-medium text-black">Sort: {sortBy.charAt(0).toUpperCase() + sortBy.slice(1)}</span>
+                                <svg className="h-3 w-3 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                                </svg>
+                            </button>
+
+                            <select
+                                id="sortDropdown"
+                                value={sortBy}
+                                onChange={(e) => setSortBy(e.target.value as 'name' | 'date' | 'size')}
+                                className="absolute z-10 text-black  opacity-0 top-0 left-0 w-full h-full cursor-pointer"
+                            >
+                                <option value="date" >Date</option>
+                                <option value="name">Name</option>
+                                <option value="size">Size</option>
+                            </select>
+
+                            {/* Mobile Sort Order Button */}
+                            {/* <button
+                                onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
+                                className="absolute right-[-22px] top-[2px] p-1.5 text-gray-500 hover:text-[#18b26f] bg-white rounded-full border border-gray-200 shadow-sm
+                                        hover:border-[#18b26f]/40 transition-all duration-300 flex-shrink-0"
+                                title={`Sort ${sortOrder === 'asc' ? 'descending' : 'ascending'}`}
+                            >
+                                <svg className={`h-3 w-3 transform transition-transform duration-300 ${sortOrder === 'desc' ? 'rotate-180' : ''}`}
+                                    fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+                                </svg>
+                            </button> */}
+                        </div>
+
+                        {/* Modified Filter - Chip Style */}
+                        <div className="relative">
+                            <button
+                                onClick={() => document.getElementById('modifiedDropdownMobile')?.click()}
+                                className={`flex items-center space-x-1 text-xs px-3 py-1.5 rounded-full border 
+                                    ${timeframe !== 'all'
+                                        ? 'border-[#18b26f] bg-[#e6f5ee] text-[#18b26f] shadow-sm'
+                                        : 'border-gray-200 bg-white text-gray-700 hover:bg-gray-50'} 
+                                    focus:outline-none focus:ring-2 focus:ring-[#18b26f]/20 shadow-sm transition-colors`}
+                            >
+                                <span className="font-medium">Modified</span>
+                                {timeframe !== 'all' && (
+                                    <span className="text-xs font-medium ml-1">&bull;</span>
+                                )}
+                                <svg className="h-3 w-3 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                                </svg>
+                            </button>
+
+                            <select
+                                id="modifiedDropdownMobile"
+                                value={timeframe}
+                                onChange={(e) => setTimeframe(e.target.value as typeof timeframe)}
+                                className="absolute z-10 text-black opacity-0 top-0 left-0 w-full h-full cursor-pointer"
+                            >
+                                <option value="all">Any time</option>
+                                <option value="today">Today</option>
+                                <option value="week">7 days</option>
+                                <option value="month">30 days</option>
+                                <option value="year">1 year</option>
+                            </select>
+                        </div>
+
+                        {/* Type Filter - Chip Style */}
+                        <div className="relative">
+                            <button
+                                onClick={() => document.getElementById('typeDropdownMobile')?.click()}
+                                className={`flex items-center space-x-1 text-xs px-3 py-1.5 rounded-full border 
+                                    ${fileType !== 'all'
+                                        ? 'border-[#18b26f] bg-[#e6f5ee] text-[#18b26f] shadow-sm'
+                                        : 'border-gray-200 bg-white text-gray-700 hover:bg-gray-50'} 
+                                    focus:outline-none focus:ring-2 focus:ring-[#18b26f]/20 shadow-sm transition-colors`}
+                            >
+                                <span className="font-medium">Type</span>
+                                {fileType !== 'all' && (
+                                    <span className="text-xs font-medium ml-1">&bull;</span>
+                                )}
+                                <svg className="h-3 w-3 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                                </svg>
+                            </button>
+
+                            <select
+                                id="typeDropdownMobile"
+                                value={fileType}
+                                onChange={(e) => setFileType(e.target.value as typeof fileType)}
+                                className="absolute z-10 text-black opacity-0 top-0 left-0 w-full h-full cursor-pointer"
+                            >
+                                <option value="all">All</option>
+                                <option value="images">Images</option>
+                                <option value="documents">Docs</option>
+                                <option value="pdfs">PDFs</option>
+                                <option value="videos">Videos</option>
+                                <option value="audio">Audio</option>
+                                <option value="others">Others</option>
+                            </select>
+                        </div>
+
+                        {/* Clear Filters Button - Mobile */}
+                        {(timeframe !== 'all' || fileType !== 'all') && (
+                            <button
+                                onClick={() => {
+                                    setTimeframe('all');
+                                    setFileType('all');
+                                }}
+                                className="text-xs text-[#18b26f] hover:text-[#149d5f] font-medium transition-colors duration-200 flex items-center space-x-1 whitespace-nowrap px-3 py-1.5 rounded-full border border-[#18b26f]/20 hover:border-[#18b26f]/40 shadow-sm"
+                            >
+                                <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                                <span>Clear</span>
+                            </button>
+                        )}
+                    </div>
+
+
+                    {/* Right Side - View Mode Controls */}
+                    <div className="flex items-center space-x-1 sm:space-x-3 flex-shrink-0">
                         <button
                             onClick={() => setViewMode('list')}
-                            className={`p-2.5 rounded-xl transition-all duration-300 shadow-sm ${viewMode === 'list'
+                            className={`p-2 sm:p-2.5 rounded-xl transition-all duration-300 shadow-sm ${viewMode === 'list'
                                 ? 'bg-gradient-to-r from-[#18b26f] to-[#149d5f] text-white shadow-md'
                                 : 'bg-white text-gray-500 hover:text-[#18b26f] hover:bg-[#e6f5ee]'
                                 }`}
                             title="List view"
                         >
-                            <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg className="h-4 w-4 sm:h-5 sm:w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 10h16M4 14h16M4 18h16" />
                             </svg>
                         </button>
                         <button
                             onClick={() => setViewMode('grid')}
-                            className={`p-2.5 rounded-xl transition-all duration-300 shadow-sm ${viewMode === 'grid'
+                            className={`p-2 sm:p-2.5 rounded-xl transition-all duration-300 shadow-sm ${viewMode === 'grid'
                                 ? 'bg-gradient-to-r from-[#18b26f] to-[#149d5f] text-white shadow-md'
                                 : 'bg-white text-gray-500 hover:text-[#18b26f] hover:bg-[#e6f5ee]'
                                 }`}
                             title="Grid view"
                         >
-                            <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg className="h-4 w-4 sm:h-5 sm:w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
                             </svg>
                         </button>
@@ -513,6 +855,7 @@ function DashboardContent() {
                                 onShare={handleShare}
                                 onPreview={handlePreview}
                                 onMove={handleMove}
+                                onToggleStar={handleToggleStar}
                                 searchType={searchType}
                             />
                         ) : (
@@ -530,6 +873,7 @@ function DashboardContent() {
                                         onShare={handleShare}
                                         onPreview={handlePreview}
                                         onMove={handleMove}
+                                        onToggleStar={handleToggleStar}
                                     />
                                 ))}
                             </div>

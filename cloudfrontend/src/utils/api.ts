@@ -15,32 +15,19 @@ const apiClient = axios.create({
 // Request interceptor to add authentication token
 apiClient.interceptors.request.use(
     (config) => {
-        console.log('🔄 AXIOS INTERCEPTOR triggered for:', config.url);
+       
 
         // Check both localStorage and sessionStorage
         const localToken = localStorage.getItem('authToken');
         const sessionToken = sessionStorage.getItem('authToken');
         const token = localToken || sessionToken;
 
-        console.log('🔍 Token retrieval:', {
-            localToken: localToken ? 'EXISTS' : 'MISSING',
-            sessionToken: sessionToken ? 'EXISTS' : 'MISSING',
-            finalToken: token ? 'EXISTS' : 'MISSING',
-            tokenLength: token?.length || 0,
-            tokenPreview: token ? `${token.substring(0, 20)}...` : 'NONE'
-        });
+        
 
         if (token && config.headers) {
             config.headers.Authorization = `Bearer ${token}`;
-            console.log(`✅ AUTHORIZATION HEADER ADDED to request: ${config.url}`);
-            console.log('Authorization header:', `Bearer ${token.substring(0, 20)}...`);
-        } else {
-            console.log(`❌ NO AUTHORIZATION HEADER added to request: ${config.url}`);
-            console.log('Reason:', !token ? 'No token available' : 'No headers object');
+         
         }
-
-        // Log the final headers
-        console.log('Final request headers:', Object.keys(config.headers || {}));
 
         return config;
     },
@@ -58,7 +45,7 @@ apiClient.interceptors.response.use(
     (error) => {
         // Handle authentication errors
         if (error.response?.status === 401) {
-            console.log('❌ 401 Unauthorized error for:', error.config?.url);
+            
 
             // Don't redirect for AI tagging requests - let the component handle it
             const isAITaggingRequest = error.config?.url?.includes('/test-ai-tagging');

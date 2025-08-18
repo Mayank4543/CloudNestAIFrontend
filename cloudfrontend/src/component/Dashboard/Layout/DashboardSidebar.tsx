@@ -7,6 +7,7 @@ import { usePathname } from 'next/navigation';
 
 interface DashboardSidebarProps {
     isOpen: boolean;
+    onClose?: () => void;
 }
 
 interface UserProfile {
@@ -18,9 +19,11 @@ interface UserProfile {
     provider?: 'local' | 'google';
 }
 
-const DashboardSidebar: React.FC<DashboardSidebarProps> = ({ isOpen }) => {
+const DashboardSidebar: React.FC<DashboardSidebarProps> = ({ isOpen, onClose }) => {
     const pathname = usePathname();
     const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
+
+
 
     useEffect(() => {
         fetchUserProfile();
@@ -74,9 +77,22 @@ const DashboardSidebar: React.FC<DashboardSidebarProps> = ({ isOpen }) => {
 
     return (
         <div
-            className={`${isOpen ? 'translate-x-0' : '-translate-x-full'
-                } fixed z-30 inset-y-0 left-0 w-64 transition duration-300 transform bg-white border-r border-gray-200 md:translate-x-0 md:static md:inset-0 font-['Inter',system-ui,sans-serif]`}
+            className={`fixed inset-y-0 left-0 z-50 w-64 transition-transform duration-300 ease-in-out bg-white border-r border-gray-200 md:relative md:translate-x-0 md:flex-shrink-0 font-['Inter',system-ui,sans-serif] shadow-xl md:shadow-none ${isOpen ? 'translate-x-0' : '-translate-x-full'
+                }`}
         >
+            {/* Mobile close button - positioned inside sidebar */}
+            <div className="md:hidden absolute top-4 right-4 z-10">
+                <button
+                    onClick={onClose}
+                    className="flex items-center justify-center h-8 w-8 rounded-full focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#18b26f] bg-gray-100 hover:bg-gray-200 text-gray-600 hover:text-gray-800"
+                >
+                    <span className="sr-only">Close sidebar</span>
+                    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+
             <div className="flex items-center px-5 h-16">
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-[#18b26f] mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
@@ -101,6 +117,7 @@ const DashboardSidebar: React.FC<DashboardSidebarProps> = ({ isOpen }) => {
                                 <Link
                                     key={item.name}
                                     href={item.href}
+                                    onClick={() => onClose && onClose()} // Close sidebar on mobile when navigating
                                     className={`group flex items-center px-3 py-2 text-sm font-medium rounded-full transition-all duration-150 ${isActive
                                         ? 'bg-[#e6f5ee] text-[#18b26f]'
                                         : 'text-gray-700 hover:bg-gray-100'

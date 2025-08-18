@@ -115,7 +115,7 @@ const formatDateFull = (dateString: string): string => {
     });
 };
 
-const FileCardListView: React.FC<FileCardProps> = ({ file,onDownload, onDelete }) => {
+const FileCardListView: React.FC<FileCardProps> = ({ file, onDownload, onDelete }) => {
     return (
         <tr className="hover:bg-gray-50 transition-colors">
             <td className="px-6 py-4 whitespace-nowrap">
@@ -203,22 +203,22 @@ const FileCardListView: React.FC<FileCardProps> = ({ file,onDownload, onDelete }
 
 const FileCardGridView: React.FC<FileCardProps> = ({ file, onDownload, onDelete }) => {
     return (
-        <div className="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
+        <div className="bg-white border border-gray-200 rounded-lg p-3 sm:p-4 hover:shadow-md transition-shadow">
             <div className="flex flex-col items-center">
-                <div className="h-16 w-16 bg-[#e6f5ee] text-[#18b26f] rounded-lg flex items-center justify-center mb-3">
+                <div className="h-12 w-12 sm:h-16 sm:w-16 bg-[#e6f5ee] text-[#18b26f] rounded-lg flex items-center justify-center mb-2 sm:mb-3">
                     {getFileIcon(file.mimetype)}
                 </div>
-                <h3 className="text-sm font-medium text-gray-900 text-center truncate w-full" title={file.originalname}>
+                <h3 className="text-xs sm:text-sm font-medium text-gray-900 text-center truncate w-full" title={file.originalname}>
                     {file.originalname}
                 </h3>
-                <div className="mt-2 flex justify-center">
+                <div className="mt-1 sm:mt-2 flex justify-center">
                     {getPrivacyBadge(file.isPublic)}
                 </div>
-                <div className="mt-2 flex items-center space-x-2">
-                    <div className="h-6 w-6 bg-[#18b26f] rounded-full flex items-center justify-center text-white text-xs font-medium">
+                <div className="mt-1 sm:mt-2 flex items-center space-x-1 sm:space-x-2">
+                    <div className="h-5 w-5 sm:h-6 sm:w-6 bg-[#18b26f] rounded-full flex items-center justify-center text-white text-xs font-medium">
                         {file.owner?.name ? file.owner.name.charAt(0).toUpperCase() : 'M'}
                     </div>
-                    <span className="text-xs text-gray-500">
+                    <span className="text-xs text-gray-500 truncate max-w-[80px]">
                         {file.owner?.name || 'Me'}
                     </span>
                 </div>
@@ -227,25 +227,25 @@ const FileCardGridView: React.FC<FileCardProps> = ({ file, onDownload, onDelete 
                         {formatFileSize(file.size)} • {formatDateShort(file.updatedAt)}
                     </span>
                 </div>
-                <div className="mt-2 text-xs text-gray-400 text-center">
+                <div className="mt-1 text-xs text-gray-400 text-center truncate w-full">
                     {getLocationPath(file.path)}
                 </div>
                 {file.tags.length > 0 && (
-                    <div className="mt-2 flex flex-wrap gap-1 justify-center">
+                    <div className="mt-1 sm:mt-2 flex flex-wrap gap-1 justify-center">
                         {file.tags.slice(0, 2).map((tag, index) => (
-                            <span key={index} className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-[#e6f5ee] text-[#18b26f]">
+                            <span key={index} className="inline-flex items-center px-1.5 sm:px-2 py-0.5 rounded text-xs font-medium bg-[#e6f5ee] text-[#18b26f]">
                                 {tag}
                             </span>
                         ))}
                     </div>
                 )}
-                <div className="mt-3 flex items-center space-x-2">
+                <div className="mt-2 sm:mt-3 flex items-center space-x-1 sm:space-x-2">
                     <button
                         onClick={() => onDownload(file._id, file.originalname)}
                         className="text-[#18b26f] hover:text-[#149d5f] p-1 rounded-full hover:bg-[#e6f5ee] transition-colors"
                         title="Download"
                     >
-                        <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg className="h-3 w-3 sm:h-4 sm:w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
                         </svg>
                     </button>
@@ -254,7 +254,7 @@ const FileCardGridView: React.FC<FileCardProps> = ({ file, onDownload, onDelete 
                         className="text-red-600 hover:text-red-700 p-1 rounded-full hover:bg-red-50 transition-colors"
                         title="Delete"
                     >
-                        <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg className="h-3 w-3 sm:h-4 sm:w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                         </svg>
                     </button>

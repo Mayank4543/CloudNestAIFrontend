@@ -21,6 +21,7 @@ interface FileData {
         email: string;
     };
     relevanceScore?: number; // For AI search results
+    starred?: boolean; // Added for star functionality
 }
 
 interface DashboardFileTableProps {
@@ -32,6 +33,7 @@ interface DashboardFileTableProps {
     onPreview: (file: FileData) => void;
     onShare: (fileId: string) => void;
     onMove: (fileId: string, destinationFolderId: string) => void;
+    onToggleStar?: (fileId: string) => void; // Add this prop
     searchType?: 'keyword' | 'semantic'; // Add search type prop
 }
 
@@ -44,6 +46,7 @@ const DashboardFileTable: React.FC<DashboardFileTableProps> = ({
     onPreview,
     onShare,
     onMove,
+    onToggleStar,
     searchType = 'keyword'
 }) => {
     const [hoveredRow, setHoveredRow] = useState<string | null>(null);
@@ -226,6 +229,36 @@ const DashboardFileTable: React.FC<DashboardFileTableProps> = ({
                     <span className="font-medium">Preview</span>
                     <span className="ml-auto text-xs text-gray-400">Ctrl+Alt+P</span>
                 </button>
+
+                {/* Star/Unstar option */}
+                {onToggleStar && (
+                    <button
+                        onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            onToggleStar(file._id);
+                            setActiveDropdown(null);
+                            setActiveShareSubmenu(null);
+                        }}
+                        className="flex items-center w-full px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-100"
+                    >
+                        {file.starred ? (
+                            <>
+                                <svg className="w-4 h-4 mr-3 text-yellow-500" fill="currentColor" viewBox="0 0 24 24">
+                                    <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" />
+                                </svg>
+                                <span className="font-medium">Remove from Starred</span>
+                            </>
+                        ) : (
+                            <>
+                                <svg className="w-4 h-4 mr-3 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
+                                </svg>
+                                <span className="font-medium">Add to Starred</span>
+                            </>
+                        )}
+                    </button>
+                )}
 
                 {/* Open in new tab option */}
                 <button
@@ -438,7 +471,8 @@ const DashboardFileTable: React.FC<DashboardFileTableProps> = ({
             />
 
             <div className="bg-white shadow-sm border border-gray-200 rounded-lg overflow-hidden">
-                <div className="overflow-x-auto">
+                {/* Desktop Table View */}
+                <div className="hidden md:block overflow-x-auto">
                     <table className="min-w-full divide-y divide-gray-200">
                         <thead className="bg-gray-50">
                             <tr>
@@ -569,6 +603,89 @@ const DashboardFileTable: React.FC<DashboardFileTableProps> = ({
                             ))}
                         </tbody>
                     </table>
+                </div>
+
+                {/* Mobile Card View */}
+                <div className="md:hidden">
+                    {/* Table Header for Mobile */}
+                    <div className="bg-gray-50 px-4 py-3 border-b border-gray-200">
+                        <h3 className="text-sm font-medium text-gray-500 uppercase tracking-wider">File Name</h3>
+                    </div>
+
+                    {files.map((file) => (
+                        <div
+                            key={file._id}
+                            className="border-b border-gray-200 last:border-b-0 p-4 hover:bg-gray-50 transition-colors"
+                            onClick={(e) => {
+                                if ((e.target as Element).tagName !== 'BUTTON' && (e.target as Element).tagName !== 'svg' && !(e.target as Element).closest('button')) {
+                                    onPreview(file);
+                                }
+                            }}
+                        >
+                            <div className="flex items-start justify-between">
+                                {/* Left Column - File Info */}
+                                <div className="flex-1 min-w-0">
+                                    {/* File Name and Icon */}
+                                    <div className="flex items-center mb-2">
+                                        <div className="flex-shrink-0 h-8 w-8 bg-[#e6f5ee] text-[#18b26f] rounded flex items-center justify-center mr-3">
+                                            {getFileIcon(file.mimetype)}
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                            <div className="text-sm font-medium text-gray-900 truncate">{file.originalname}</div>
+                                        </div>
+                                    </div>
+
+                                    {/* Single Tag Row with # */}
+                                    <div className="mb-3">
+                                        {file.tags && file.tags.length > 0 ? (
+                                            <span
+                                                className="inline-flex items-center text-sm font-bold text-blue-600"
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    console.log('Tag clicked:', file.tags[0]);
+                                                }}
+                                            >
+                                                #{file.tags[0].length > 15 ? `${file.tags[0].substring(0, 15)}...` : file.tags[0]}
+                                            </span>
+                                        ) : (
+                                            <span className="text-gray-400 text-sm italic">No tags</span>
+                                        )}
+                                    </div>
+
+                                    {/* File Details - Only time */}
+                                    <div className="flex items-center text-xs text-gray-500">
+                                        <span>{formatDateShort(file.updatedAt)}</span>
+                                        {searchType === 'semantic' && file.relevanceScore && (
+                                            <>
+                                                <span className="mx-2">•</span>
+                                                <span className="text-green-600 font-medium">
+                                                    {Math.round(file.relevanceScore * 100)}% match
+                                                </span>
+                                            </>
+                                        )}
+                                    </div>
+                                </div>
+
+                                {/* Right Column - Three Dots Menu */}
+                                <div className="flex-shrink-0 ml-4">
+                                    <button
+                                        className="p-2 rounded hover:bg-gray-100 transition-colors"
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            toggleDropdown(file._id, e);
+                                        }}
+                                        title="More actions"
+                                    >
+                                        <svg className="w-5 h-5 text-gray-600" fill="currentColor" viewBox="0 0 24 24">
+                                            <path d="M12,16A2,2 0 0,1 14,18A2,2 0 0,1 12,20A2,2 0 0,1 10,18A2,2 0 0,1 12,16M12,10A2,2 0 0,1 14,12A2,2 0 0,1 12,14A2,2 0 0,1 10,12A2,2 0 0,1 12,10M12,4A2,2 0 0,1 14,6A2,2 0 0,1 12,8A2,2 0 0,1 10,6A2,2 0 0,1 12,4Z" />
+                                        </svg>
+                                    </button>
+                                    {/* Dropdown Menu - Same component works for both views */}
+                                    <DropdownMenu file={file} />
+                                </div>
+                            </div>
+                        </div>
+                    ))}
                 </div>
             </div>
         </>

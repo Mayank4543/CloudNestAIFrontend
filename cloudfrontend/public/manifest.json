@@ -1,16 +1,92 @@
 {
-  "name": "CloudNest AI",
-  "short_name": "CloudNest",
+  "name": "CloudNest AI - Intelligent Cloud Storage",
+  "short_name": "CloudNest AI",
+  "description": "AI-powered cloud storage platform for secure file management, semantic search, and document analysis",
   "icons": [
+    {
+      "src": "/favicon-16x16.svg",
+      "sizes": "16x16",
+      "type": "image/svg+xml"
+    },
     {
       "src": "/favicon-32x32.svg",
       "sizes": "32x32",
       "type": "image/svg+xml"
+    },
+    {
+      "src": "/apple-touch-icon.svg",
+      "sizes": "180x180",
+      "type": "image/svg+xml"
+    },
+    {
+      "src": "/cloudnest-icon.svg",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/cloudnest-logo.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
     }
   ],
   "theme_color": "#18b26f",
   "background_color": "#ffffff",
   "start_url": "/",
   "display": "standalone",
-  "orientation": "portrait"
+  "orientation": "portrait-primary",
+  "scope": "/",
+  "lang": "en",
+  "categories": ["productivity", "business", "utilities"],
+  "screenshots": [
+    {
+      "src": "/cloudnest-logo.svg",
+      "sizes": "1280x720",
+      "type": "image/svg+xml",
+      "form_factor": "wide",
+      "label": "CloudNest AI Dashboard"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Upload Files",
+      "short_name": "Upload",
+      "description": "Upload new files to CloudNest AI",
+      "url": "/upload",
+      "icons": [
+        {
+          "src": "/cloudnest-icon.svg",
+          "sizes": "96x96",
+          "type": "image/svg+xml"
+        }
+      ]
+    },
+    {
+      "name": "Search Files",
+      "short_name": "Search",
+      "description": "Search your files with AI",
+      "url": "/search",
+      "icons": [
+        {
+          "src": "/cloudnest-icon.svg",
+          "sizes": "96x96",
+          "type": "image/svg+xml"
+        }
+      ]
+    },
+    {
+      "name": "Dashboard",
+      "short_name": "Dashboard",
+      "description": "View your files dashboard",
+      "url": "/dashboard",
+      "icons": [
+        {
+          "src": "/cloudnest-icon.svg",
+          "sizes": "96x96",
+          "type": "image/svg+xml"
+        }
+      ]
+    }
+  ]
 }

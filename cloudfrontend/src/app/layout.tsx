@@ -14,17 +14,68 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "CloudNest AI - Cloud Storage",
-  description: "Modern cloud storage with AI-powered insights",
+  title: "CloudNest AI - Intelligent Cloud Storage",
+  description: "AI-powered cloud storage platform for secure file management, semantic search, and document analysis",
+  manifest: "/manifest.json",
+  themeColor: "#18b26f",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "CloudNest AI",
+  },
+  formatDetection: {
+    telephone: false,
+  },
+  openGraph: {
+    type: "website",
+    siteName: "CloudNest AI",
+    title: "CloudNest AI - Intelligent Cloud Storage",
+    description: "AI-powered cloud storage platform for secure file management",
+    images: [
+      {
+        url: "/cloudnest-logo.svg",
+        width: 1200,
+        height: 630,
+        alt: "CloudNest AI Logo",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "CloudNest AI - Intelligent Cloud Storage",
+    description: "AI-powered cloud storage platform for secure file management",
+    images: ["/cloudnest-logo.svg"],
+  },
   icons: {
     icon: [
+      {
+        url: '/favicon-16x16.svg',
+        type: 'image/svg+xml',
+        sizes: '16x16'
+      },
       {
         url: '/favicon-32x32.svg',
         type: 'image/svg+xml',
         sizes: '32x32'
       }
+    ],
+    apple: [
+      {
+        url: '/apple-touch-icon.svg',
+        type: 'image/svg+xml',
+        sizes: '180x180'
+      }
     ]
-  }
+  },
+  other: {
+    "mobile-web-app-capable": "yes",
+    "apple-mobile-web-app-capable": "yes",
+    "apple-mobile-web-app-status-bar-style": "default",
+    "apple-mobile-web-app-title": "CloudNest AI",
+    "application-name": "CloudNest AI",
+    "msapplication-TileColor": "#18b26f",
+    "msapplication-tap-highlight": "no",
+  },
 };
 
 export default function RootLayout({

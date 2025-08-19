@@ -476,9 +476,9 @@ function DashboardContent() {
         }
     };
 
-    const handleMove = (_fileId: string) => {
+    const handleMove = (fileId: string) => {
         // Placeholder for move functionality
-        console.log('Move file functionality not yet implemented for ID:');
+        console.log('Move file functionality not yet implemented for ID:', fileId);
     };
 
     return (

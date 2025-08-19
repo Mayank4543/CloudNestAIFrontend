@@ -214,7 +214,7 @@ const Search: React.FC = () => {
                                 <FileCardListView
                                     key={file._id}
                                     file={file}
-                                    onDownload={(fileId, fileName) => {
+                                    onDownload={(fileId) => {
                                         window.open(`${process.env.NEXT_PUBLIC_API_URL || 'https://cloudnestaibackend.onrender.com'}/api/files/download/${fileId}`, '_blank');
                                        
                                     }}

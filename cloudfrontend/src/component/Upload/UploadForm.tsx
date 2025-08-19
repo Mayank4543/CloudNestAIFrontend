@@ -30,7 +30,9 @@ const UploadForm: React.FC = () => {
         const token = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
         const userSession = localStorage.getItem('userSession') || sessionStorage.getItem('userSession');
 
-      
+        // Log auth status for debugging
+        console.log('Auth Token:', token ? 'Present' : 'Missing');
+        console.log('User Session:', userSession ? 'Active' : 'Inactive');
 
         // Also check all storage items to see what's there
        
@@ -38,7 +40,7 @@ const UploadForm: React.FC = () => {
             const key = localStorage.key(i);
             if (key) {
                 const value = localStorage.getItem(key);
-                
+                console.log(`Storage item - ${key}:`, value ? 'Present' : 'Empty');
             }
         }
     }, []);
@@ -66,7 +68,7 @@ const UploadForm: React.FC = () => {
             try {
                
                 const response = await api.auth.getProfile();
-              
+                console.log('Auth test successful:', response.data);
                 showToastMessage('Authentication is working perfectly!', 'success');
             } catch (error: unknown) {
                 console.error('❌ Auth test FAILED:', error);

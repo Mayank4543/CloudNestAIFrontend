@@ -122,7 +122,7 @@ export default function LoginForm() {
             // Cleanup interval after 10 seconds
             setTimeout(() => clearInterval(checkGoogleLoaded), 10000);
         }
-    }, [rememberMe, router, showToastMessage]);
+    }, [rememberMe, router, showToastMessage, isMobileSession]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();

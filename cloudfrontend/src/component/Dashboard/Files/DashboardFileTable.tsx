@@ -72,8 +72,8 @@ const DashboardFileTable: React.FC<DashboardFileTableProps> = ({
     // Handler for scan completion
     const handleScanComplete = (result: ScanResult) => {
         setScanResult(result);
-        setScanModalOpen(false);
-        setShowSensitiveAlert(true);
+        setScanModalOpen(false); // Close scan modal
+        setShowSensitiveAlert(true); // Show results alert
     };
 
     const handleCloseScanModal = () => {

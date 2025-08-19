@@ -25,7 +25,7 @@ const UploadForm: React.FC = () => {
 
     // Check auth status on mount
     useEffect(() => {
-       
+
 
         const token = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
         const userSession = localStorage.getItem('userSession') || sessionStorage.getItem('userSession');
@@ -35,7 +35,7 @@ const UploadForm: React.FC = () => {
         console.log('User Session:', userSession ? 'Active' : 'Inactive');
 
         // Also check all storage items to see what's there
-       
+
         for (let i = 0; i < localStorage.length; i++) {
             const key = localStorage.key(i);
             if (key) {
@@ -54,19 +54,19 @@ const UploadForm: React.FC = () => {
 
     // Debug function to check authentication
     const checkAuthStatus = () => {
-    
+
 
         const localToken = localStorage.getItem('authToken');
         const sessionToken = sessionStorage.getItem('authToken');
         const localUserSession = localStorage.getItem('userSession');
         const sessionUserSession = sessionStorage.getItem('userSession');
 
-      
+
 
         // Test a simple authenticated request
         const testAuth = async () => {
             try {
-               
+
                 const response = await api.auth.getProfile();
                 console.log('Auth test successful:', response.data);
                 showToastMessage('Authentication is working perfectly!', 'success');
@@ -275,7 +275,7 @@ const UploadForm: React.FC = () => {
                 setUploadSuccess(true);
                 const successMsg = responseData.message || 'File uploaded successfully!';
                 showToastMessage(successMsg, 'success');
-                
+
 
                 // Notify dashboard to refresh (for cross-tab communication)
                 localStorage.setItem('fileUploaded', Date.now().toString());

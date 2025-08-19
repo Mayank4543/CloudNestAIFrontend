@@ -31,7 +31,7 @@ function ProfileContent() {
     // Removed unused debugInfo state
 
     useEffect(() => {
-        
+
 
         // Gather debug info
         const authToken = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
@@ -40,7 +40,7 @@ function ProfileContent() {
         // Debug information now logged instead of stored in state
         console.log('Auth Token:', authToken ? 'Present' : 'Missing');
         console.log('User Session:', userSession ? 'Active' : 'Inactive');
-      
+
         fetchUserProfile();
     }, []);
 
@@ -51,7 +51,7 @@ function ProfileContent() {
 
             // Get auth token from localStorage or sessionStorage
             const authToken = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
-            
+
 
             if (!authToken) {
                 setError('No authentication token found');
@@ -59,7 +59,7 @@ function ProfileContent() {
                 return;
             }
 
-         
+
             const response = await fetch('https://cloudnestaibackend.onrender.com/api/auth/profile', {
                 method: 'GET',
                 headers: {
@@ -68,13 +68,13 @@ function ProfileContent() {
                 },
             });
 
-           
+
             const data: ApiResponse = await response.json();
-          
+
 
             if (response.ok && data.success && data.data?.user) {
                 setProfile(data.data.user);
-               
+
             } else {
                 setError(data.message || `API Error: ${response.status} - Failed to fetch profile`);
                 console.error('API error:', data);
@@ -211,7 +211,7 @@ function ProfileContent() {
                                         priority
                                         crossOrigin="anonymous"
                                         referrerPolicy="no-referrer"
-                                        
+
                                         onError={(e) => {
                                             // Fallback to initials if image fails to load
                                             console.error('Profile image failed to load:', getOptimizedImageUrl(profile.picture || profile.profilePicture));

@@ -216,7 +216,7 @@ const Search: React.FC = () => {
                                     file={file}
                                     onDownload={(fileId) => {
                                         window.open(`${process.env.NEXT_PUBLIC_API_URL || 'https://cloudnestaibackend.onrender.com'}/api/files/download/${fileId}`, '_blank');
-                                       
+
                                     }}
                                     onDelete={(fileId) => {
                                         handleFileDelete(fileId);

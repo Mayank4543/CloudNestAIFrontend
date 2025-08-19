@@ -61,7 +61,7 @@ export default function LoginForm() {
                     const storage = rememberMe ? localStorage : sessionStorage;
                     storage.setItem('authToken', data.data.token);
                     storage.setItem('userSession', 'true');
-                    
+
                     // Store mobile session if applicable
                     if (isMobileSession) {
                         storage.setItem('mobile-session', 'true');
@@ -136,7 +136,7 @@ export default function LoginForm() {
                 return;
             }
 
-        
+
 
             // Call backend API for authentication
             const response = await fetch(`${API_BASE_URL}/api/auth/login`, {
@@ -151,15 +151,15 @@ export default function LoginForm() {
             });
 
             const data = await response.json();
-          
+
 
             if (response.ok && data.success && data.data?.token) {
-            
+
 
                 // Store the token in localStorage or sessionStorage based on remember me
                 const storage = rememberMe ? localStorage : sessionStorage;
                 storage.setItem('authToken', data.data.token);
-                
+
                 // Store mobile session if applicable
                 if (isMobileSession) {
                     storage.setItem('mobile-session', 'true');
@@ -169,29 +169,29 @@ export default function LoginForm() {
                 showToastMessage('Login successful! Redirecting...', 'success');
                 setIsLoading(false);
 
-                
+
 
                 // Check if user is admin based on email or response data
                 if (email === 'admin@cloudnest.ai' || data.data.user?.role === 'admin') {
                     storage.setItem('adminSession', 'true');
-                   
+
                     // Redirect after showing success message
                     setTimeout(() => {
-                        
+
                         router.push('/admin');
                     }, 1500);
                 } else {
                     storage.setItem('userSession', 'true');
-                   
+
                     // Redirect after showing success message
                     setTimeout(() => {
-                       
+
                         router.push('/dashboard');
                     }, 1500);
                 }
                 return; // Important: return here to prevent further execution
             } else {
-              
+
                 showToastMessage(data.message || 'Invalid email or password', 'error');
                 setIsLoading(false);
             }
@@ -303,8 +303,8 @@ export default function LoginForm() {
                     </div>
                 </div>                <p className="mt-6 text-center text-sm text-gray-600">
                     Don&apos;t have an account?{' '}
-                    <Link 
-                        href={`/auth/register${isMobileSession ? '?mobile=true' : ''}`} 
+                    <Link
+                        href={`/auth/register${isMobileSession ? '?mobile=true' : ''}`}
                         className="text-[#18b26f] hover:text-[#149d5f] font-medium"
                     >
                         Register here

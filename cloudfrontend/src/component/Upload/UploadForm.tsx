@@ -3,6 +3,10 @@ import { api } from '@/utils/api';
 import { isAxiosError } from 'axios';
 import Toast from '@/component/common/Toast';
 import AITagSuggestions from './AITagSuggestions';
+import PartitionSelector from '@/component/Dashboard/Partitions/PartitionSelector';
+
+// File size constants
+const MAX_FILE_SIZE = 2 * 1024 * 1024 * 1024; // 2GB in bytes
 
 
 const UploadForm: React.FC = () => {
@@ -17,6 +21,7 @@ const UploadForm: React.FC = () => {
     // New states for additional features
     const [enableAITagging, setEnableAITagging] = useState<boolean>(true);
     const [cutMode, setCutMode] = useState<boolean>(false);
+    const [selectedPartition, setSelectedPartition] = useState<string>('personal');
 
     // Toast states
     const [showToast, setShowToast] = useState<boolean>(false);
@@ -25,22 +30,11 @@ const UploadForm: React.FC = () => {
 
     // Check auth status on mount
     useEffect(() => {
-
-
-        const token = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
-        const userSession = localStorage.getItem('userSession') || sessionStorage.getItem('userSession');
-
-        // Log auth status for debugging
-        console.log('Auth Token:', token ? 'Present' : 'Missing');
-        console.log('User Session:', userSession ? 'Active' : 'Inactive');
-
-        // Also check all storage items to see what's there
-
+        // Check all storage items to see what's there
         for (let i = 0; i < localStorage.length; i++) {
             const key = localStorage.key(i);
             if (key) {
-                const value = localStorage.getItem(key);
-                console.log(`Storage item - ${key}:`, value ? 'Present' : 'Empty');
+                localStorage.getItem(key);
             }
         }
     }, []);
@@ -52,51 +46,26 @@ const UploadForm: React.FC = () => {
         setShowToast(true);
     };
 
-    // Debug function to check authentication
-    const checkAuthStatus = () => {
-
-
-        const localToken = localStorage.getItem('authToken');
-        const sessionToken = sessionStorage.getItem('authToken');
-        const localUserSession = localStorage.getItem('userSession');
-        const sessionUserSession = sessionStorage.getItem('userSession');
-
-
-
-        // Test a simple authenticated request
-        const testAuth = async () => {
-            try {
-
-                const response = await api.auth.getProfile();
-                console.log('Auth test successful:', response.data);
-                showToastMessage('Authentication is working perfectly!', 'success');
-            } catch (error: unknown) {
-                console.error('❌ Auth test FAILED:', error);
-                const errorWithResponse = error as { response?: { status?: number } };
-                if (errorWithResponse.response?.status === 401) {
-                    showToastMessage('Authentication failed - please log in again', 'error');
-                } else {
-                    showToastMessage(`Auth test error: ${error instanceof Error ? error.message : 'Unknown error'}`, 'error');
-                }
-            }
-        };
-
-        const token = localToken || sessionToken;
-        const userSession = localUserSession || sessionUserSession;
-
-        if (!token) {
-            showToastMessage('❌ No authentication token found. Please log in again.', 'error');
-        } else if (!userSession) {
-            showToastMessage('❌ No user session found. Please log in again.', 'error');
-        } else {
-            showToastMessage('✅ Auth data looks good! Testing API call...', 'info');
-            testAuth();
-        }
-    };
 
     // Handle file selection
     const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files.length > 0) {
+            const selectedFiles = Array.from(e.target.files);
+
+            // Validate file sizes
+            const oversizedFiles = selectedFiles.filter(file => file.size > MAX_FILE_SIZE);
+
+            if (oversizedFiles.length > 0) {
+                const oversizedFileNames = oversizedFiles.map(file => `${file.name} (${formatFileSize(file.size)})`).join(', ');
+                showToastMessage(
+                    `The following files exceed the 2GB limit: ${oversizedFileNames}`,
+                    'error'
+                );
+                // Clear the input
+                e.target.value = '';
+                return;
+            }
+
             setFiles(e.target.files);
             // Reset success message and AI tags if new files are selected
             setUploadSuccess(false);
@@ -248,8 +217,8 @@ const UploadForm: React.FC = () => {
                 formData.append('tags', JSON.stringify(allTags));
             }
 
-            // Make API request with Authorization header
-            const response = await api.files.upload(formData);
+            // Make API request with Authorization header and partition
+            const response = await api.files.upload(formData, selectedPartition);
 
             // Type guard for response data
             interface UploadResponse {
@@ -292,6 +261,7 @@ const UploadForm: React.FC = () => {
                 setFiles(null);
                 setTags('');
                 setAiSelectedTags([]);
+                setSelectedPartition('personal');
                 // Reset the file input by targeting the form element
                 const form = e.target as HTMLFormElement;
                 form.reset();
@@ -397,16 +367,8 @@ const UploadForm: React.FC = () => {
 
                         {/* Left Column - File Upload Area */}
                         <div className="space-y-6">
-                            {/* Debug Auth Button - Remove this after testing */}
-                            <div className="flex justify-end">
-                                <button
-                                    type="button"
-                                    onClick={checkAuthStatus}
-                                    className="text-xs bg-blue-100 hover:bg-blue-200 text-blue-800 px-3 py-1 rounded-lg transition-colors"
-                                >
-                                    Check Auth Status
-                                </button>
-                            </div>
+
+
 
                             {/* Enhanced File Input with Gradient Background */}
                             <div>
@@ -423,7 +385,7 @@ const UploadForm: React.FC = () => {
                                                 <span className="font-bold text-[#18b26f] group-hover:text-[#149d5f]">Click to upload</span> or drag and drop
                                             </p>
                                             <p className="text-sm text-gray-500 mt-2">
-                                                Support for multiple files • Max 10MB per file
+                                                Support for multiple files • Max 2GB per file
                                             </p>
                                         </div>
                                         <input
@@ -542,11 +504,20 @@ const UploadForm: React.FC = () => {
                             )}
                         </div>
 
-                        {/* Right Column - Tags and AI Suggestions */}
+                        {/* Right Column - Partition, Tags and AI Suggestions */}
                         <div className="space-y-6">
+                            {/* Partition Selection */}
+                            <div className="bg-gradient-to-br from-green-50 to-emerald-50 p-6 rounded-xl border border-green-200">
+                                <PartitionSelector
+                                    selectedPartition={selectedPartition}
+                                    onPartitionChange={setSelectedPartition}
+                                    disabled={isUploading}
+                                    showUsage={true}
+                                />
+                            </div>
                             {/* Enhanced Tags Input with Chips */}
                             <div className="bg-gradient-to-br from-blue-50 to-indigo-50 p-6 rounded-xl border border-blue-200">
-                                <label htmlFor="tags" className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+                                <label htmlFor="tags" className="text-lg font-semibold text-black mb-4 flex items-center">
                                     <svg className="h-5 w-5 mr-2 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
                                     </svg>
@@ -585,7 +556,7 @@ const UploadForm: React.FC = () => {
                                         value={tags}
                                         onChange={handleTagChange}
                                         placeholder="Add tags or use AI suggestions below..."
-                                        className="block w-full pl-10 pr-3 py-3 border border-blue-300 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-sm transition-all duration-150"
+                                        className="block w-full pl-10 pr-3 py-3 border text-black border-blue-300 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-sm transition-all duration-150"
                                     />
                                     <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                                         <svg className="h-5 w-5 text-blue-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">

@@ -54,7 +54,7 @@ export default function TrashPage() {
             }
 
             const response = await axios.get<TrashResponse>(
-                `${process.env.NEXT_PUBLIC_API_BASE_URL || 'https://cloudnestaibackend.onrender.com'}/api/files/trash`,
+                `${process.env.NEXT_PUBLIC_API_BASE_URL }/api/files/trash`,
                 {
                     headers: {
                         Authorization: `Bearer ${token}`,
@@ -85,7 +85,7 @@ export default function TrashPage() {
             }
 
             await axios.put(
-                `${process.env.NEXT_PUBLIC_API_BASE_URL || 'https://cloudnestaibackend.onrender.com'}/api/files/restore/${fileId}`,
+                `${process.env.NEXT_PUBLIC_API_BASE_URL }/api/files/restore/${fileId}`,
                 {},
                 {
                     headers: {
@@ -141,7 +141,7 @@ export default function TrashPage() {
             }
 
             await axios.delete(
-                `${process.env.NEXT_PUBLIC_API_BASE_URL || 'https://cloudnestaibackend.onrender.com'}/api/files/permanent/${fileId}`,
+                `${process.env.NEXT_PUBLIC_API_BASE_URL }/api/files/permanent/${fileId}`,
                 {
                     headers: {
                         Authorization: `Bearer ${token}`,
@@ -196,7 +196,7 @@ export default function TrashPage() {
             }
 
             await axios.delete(
-                `${process.env.NEXT_PUBLIC_API_BASE_URL || 'https://cloudnestaibackend.onrender.com'}/api/files/trash/empty`,
+                `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/files/trash/empty`,
                 {
                     headers: {
                         Authorization: `Bearer ${token}`,

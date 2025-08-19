@@ -1,7 +1,8 @@
 import axios from 'axios';
+import { IStoragePartition, PartitionWithStats } from '@/types/partitions';
 
 // Get the API base URL from environment variables
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://cloudnestaibackend.onrender.com';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
 // Create axios instance with default configuration
 const apiClient = axios.create({
@@ -15,18 +16,18 @@ const apiClient = axios.create({
 // Request interceptor to add authentication token
 apiClient.interceptors.request.use(
     (config) => {
-       
+
 
         // Check both localStorage and sessionStorage
         const localToken = localStorage.getItem('authToken');
         const sessionToken = sessionStorage.getItem('authToken');
         const token = localToken || sessionToken;
 
-        
+
 
         if (token && config.headers) {
             config.headers.Authorization = `Bearer ${token}`;
-         
+
         }
 
         return config;
@@ -45,7 +46,7 @@ apiClient.interceptors.response.use(
     (error) => {
         // Handle authentication errors
         if (error.response?.status === 401) {
-            
+
 
             // Don't redirect for AI tagging requests - let the component handle it
             const isAITaggingRequest = error.config?.url?.includes('/test-ai-tagging');
@@ -73,10 +74,15 @@ export const api = {
         getAll: (params?: { page?: number; limit?: number }) =>
             apiClient.get('/api/files/', { params }),
 
-        upload: (formData: FormData) =>
-            apiClient.post('/api/files/upload', formData, {
+        upload: (formData: FormData, partition?: string) => {
+            // Add partition if specified
+            if (partition) {
+                formData.append('partition', partition);
+            }
+            return apiClient.post('/api/files/upload', formData, {
                 headers: { 'Content-Type': 'multipart/form-data' }
-            }),
+            });
+        },
 
         download: (fileId: string) =>
             `${API_BASE_URL}/api/files/download/${fileId}`,
@@ -228,6 +234,26 @@ export const api = {
                 };
             }>(`/api/summary/${fileId}`);
         },
+
+        // Scan file for sensitive data
+        scanSensitiveData: (fileId: string, textContent?: string) => {
+            return apiClient.post<{
+                success: boolean;
+                message: string;
+                data: {
+                    fileId: string;
+                    filename: string;
+                    scanResult: {
+                        containsSensitiveData: boolean;
+                        riskLevel: 'LOW' | 'MEDIUM' | 'HIGH';
+                        confidence: number;
+                        sensitiveDataTypes: string[];
+                        details: string[];
+                        recommendation: string;
+                    };
+                };
+            }>(`/api/files/${fileId}/scan-sensitive`, { textContent });
+        },
     },
 
     // Authentication
@@ -255,6 +281,71 @@ export const api = {
 
         changePassword: (passwordData: { currentPassword: string; newPassword: string }) =>
             apiClient.put('/api/user/password', passwordData),
+    },
+
+    // Storage Partitions operations
+    partitions: {
+        getAll: () =>
+            apiClient.get<{
+                success: boolean;
+                message: string;
+                data: PartitionWithStats[]; // Backend returns transformed partition data
+            }>('/api/partitions'),
+
+        create: (partitionData: { name: string; quota: number }) =>
+            apiClient.post<{
+                success: boolean;
+                message: string;
+                data: IStoragePartition;
+            }>('/api/partitions', partitionData),
+
+        update: (partitionName: string, data: { quota?: number }) =>
+            apiClient.patch<{
+                success: boolean;
+                message: string;
+                data: IStoragePartition;
+            }>(`/api/partitions/${partitionName}`, data),
+
+        delete: (partitionName: string) =>
+            apiClient.delete<{
+                success: boolean;
+                message: string;
+            }>(`/api/partitions/${partitionName}`),
+
+        moveFiles: (data: { fileIds: string[]; fromPartition: string; toPartition: string }) =>
+            apiClient.post<{
+                success: boolean;
+                message: string;
+            }>('/api/partitions/move-files', data),
+
+        getUsage: () =>
+            apiClient.get<{
+                success: boolean;
+                message: string;
+                data: {
+                    partitions: PartitionWithStats[];
+                    totalUsed: number;
+                    totalQuota: number;
+                    totalFiles: number;
+                };
+            }>('/api/partitions/usage'),
+
+        // Development testing endpoints (only available in development)
+        test: {
+            generateReport: () =>
+                apiClient.get<{
+                    success: boolean;
+                    message: string;
+                    data: Record<string, unknown>;
+                }>('/api/partitions/test/report'),
+
+            testManagement: () =>
+                apiClient.post<{
+                    success: boolean;
+                    message: string;
+                    data: Record<string, unknown>;
+                }>('/api/partitions/test/management'),
+        },
     },
 };
 

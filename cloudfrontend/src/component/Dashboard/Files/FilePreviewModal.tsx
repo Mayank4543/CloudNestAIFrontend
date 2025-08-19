@@ -87,7 +87,7 @@ const FilePreviewModal: React.FC<FilePreviewModalProps> = ({
             } else {
                 // Fallback to proxy URL for regular files
                 const filename = file.filename || file.originalname || 'unknown_file';
-                const baseUrl = `${process.env.NEXT_PUBLIC_API_BASE_URL || 'https://cloudnestaibackend.onrender.com'}/api/files/proxy/${encodeURIComponent(filename)}`;
+                const baseUrl = `${process.env.NEXT_PUBLIC_API_BASE_URL }/api/files/proxy/${encodeURIComponent(filename)}`;
 
                 // For different file types, we might need different handling
                 const mimetype = file.mimetype || '';

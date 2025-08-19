@@ -130,7 +130,7 @@ Required environment variables in `.env.local`:
 
 ```bash
 # Backend API URL
-NEXT_PUBLIC_API_URL=https://cloudnestaibackend.onrender.com
+NEXT_PUBLIC_API_BASE_URL=your_backend_url
 
 # Google OAuth Configuration
 NEXT_PUBLIC_GOOGLE_CLIENT_ID=your_google_client_id_here

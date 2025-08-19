@@ -161,7 +161,7 @@ export default function EnhancedSearch() {
                         key={file._id}
                         file={file}
                         onDownload={(fileId) => {
-                          window.open(`${process.env.NEXT_PUBLIC_API_URL || 'https://cloudnestaibackend.onrender.com'}/api/files/download/${fileId}`, '_blank');
+                          window.open(`${process.env.NEXT_PUBLIC_API_BASE_URL }/api/files/download/${fileId}`, '_blank');
                         }}
                         onDelete={(fileId) => {
                           handleFileDelete(fileId);

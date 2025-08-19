@@ -2,6 +2,17 @@ import React, { useState } from 'react';
 import { formatFileSize } from '@/utils/api';
 import ShareModal from './ShareModal';
 import SummarizeModal from './SummarizeModal';
+import ScanWithAI from './ScanWithAI';
+import SensitiveDataAlert from './SensitiveDataAlert';
+
+interface ScanResult {
+    containsSensitiveData: boolean;
+    riskLevel: 'LOW' | 'MEDIUM' | 'HIGH';
+    confidence: number;
+    sensitiveDataTypes: string[];
+    details: string[];
+    recommendation: string;
+}
 
 interface FileData {
     _id: string;
@@ -53,13 +64,35 @@ const DashboardFileTable: React.FC<DashboardFileTableProps> = ({
     const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
     const [summarizeModalOpen, setSummarizeModalOpen] = useState<boolean>(false);
     const [selectedFileForSummary, setSelectedFileForSummary] = useState<FileData | null>(null);
+    const [scanModalOpen, setScanModalOpen] = useState<boolean>(false);
+    const [selectedFileForScan, setSelectedFileForScan] = useState<FileData | null>(null);
+    const [showSensitiveAlert, setShowSensitiveAlert] = useState<boolean>(false);
+    const [scanResult, setScanResult] = useState<ScanResult | null>(null);
+
+    // Handler for scan completion
+    const handleScanComplete = (result: ScanResult) => {
+        setScanResult(result);
+        setScanModalOpen(false);
+        setShowSensitiveAlert(true);
+    };
+
+    const handleCloseScanModal = () => {
+        setScanModalOpen(false);
+        setSelectedFileForScan(null);
+    };
+
+    const handleCloseSensitiveAlert = () => {
+        setShowSensitiveAlert(false);
+        setScanResult(null);
+        setSelectedFileForScan(null);
+    };
 
     // Helper function to copy private link
     const copyPrivateLink = async (file: FileData) => {
         try {
             // Generate proxy link like in ShareModal
             const filename = file.filename || file.originalname || 'unknown_file';
-            let link = `${process.env.NEXT_PUBLIC_API_BASE_URL || 'https://cloudnestaibackend.onrender.com'}/api/files/proxy/${encodeURIComponent(filename)}`;
+            let link = `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/files/proxy/${encodeURIComponent(filename)}`;
 
             // Handle different file types like in ShareModal
             const mimetype = file.mimetype || '';
@@ -436,6 +469,25 @@ const DashboardFileTable: React.FC<DashboardFileTableProps> = ({
                     <span className="ml-auto text-xs text-gray-400">AI</span>
                 </button>
 
+                {/* Scan with AI option */}
+                <button
+                    onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        setSelectedFileForScan(file);
+                        setScanModalOpen(true);
+                        setActiveDropdown(null);
+                        setActiveShareSubmenu(null);
+                    }}
+                    className="flex items-center w-full px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-100"
+                >
+                    <svg className="w-4 h-4 mr-3 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <span className="font-medium">Scan with AI</span>
+                    <span className="ml-auto text-xs text-gray-400">Privacy</span>
+                </button>
+
                 {/* Move to trash option */}
                 <button
                     onClick={(e) => {
@@ -477,6 +529,36 @@ const DashboardFileTable: React.FC<DashboardFileTableProps> = ({
                     setSelectedFileForSummary(null);
                 }}
             />
+
+            {/* Scan with AI Modal */}
+            {selectedFileForScan && (
+                <ScanWithAI
+                    fileId={selectedFileForScan._id}
+                    filename={selectedFileForScan.originalname}
+                    onScanComplete={handleScanComplete}
+                    onClose={handleCloseScanModal}
+                    isOpen={scanModalOpen}
+                />
+            )}
+
+            {/* Sensitive Data Alert Modal */}
+            {scanResult && selectedFileForScan && (
+                <SensitiveDataAlert
+                    scanResult={scanResult}
+                    filename={selectedFileForScan.originalname}
+                    onProceedPublic={() => {
+                        // For standalone scan, just show the result
+                        showToast('Scan complete. Check the result above.', 'success');
+                        handleCloseSensitiveAlert();
+                    }}
+                    onKeepPrivate={() => {
+                        showToast('File scan completed.', 'success');
+                        handleCloseSensitiveAlert();
+                    }}
+                    onClose={handleCloseSensitiveAlert}
+                    isOpen={showSensitiveAlert}
+                />
+            )}
 
             <div className="bg-white shadow-sm border border-gray-200 rounded-lg overflow-hidden">
                 {/* Desktop Table View */}

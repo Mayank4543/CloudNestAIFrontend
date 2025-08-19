@@ -7,7 +7,7 @@ import { useRouter } from 'next/navigation';
 import Toast from '@/component/common/Toast';
 
 // API Base URL from environment variables
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://cloudnestaibackend.onrender.com';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ;
 
 export default function RegisterForm() {
     const [name, setName] = useState('');

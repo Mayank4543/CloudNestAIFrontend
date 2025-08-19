@@ -1,7 +1,18 @@
 import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
+import ScanWithAI from './ScanWithAI';
+import SensitiveDataAlert from './SensitiveDataAlert';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://cloudnestaibackend.onrender.com';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
+
+interface ScanResult {
+    containsSensitiveData: boolean;
+    riskLevel: 'LOW' | 'MEDIUM' | 'HIGH';
+    confidence: number;
+    sensitiveDataTypes: string[];
+    details: string[];
+    recommendation: string;
+}
 
 interface FileApiResponse {
     success: boolean;
@@ -67,6 +78,12 @@ const ShareModal: React.FC<ShareModalProps> = ({
     const [toastMessage, setToastMessage] = useState<string>('Link copied');
     const [userData, setUserData] = useState({ name: userName, email: userEmail });
 
+    // States for AI scanning functionality
+    const [showScanModal, setShowScanModal] = useState(false);
+    const [showSensitiveAlert, setShowSensitiveAlert] = useState(false);
+    const [scanResult, setScanResult] = useState<ScanResult | null>(null);
+    const [pendingPublicStatus, setPendingPublicStatus] = useState<boolean | null>(null);
+
     const userInitial = userData.name.charAt(0).toUpperCase();
 
     const fadeInAnimation = `
@@ -118,9 +135,27 @@ const ShareModal: React.FC<ShareModalProps> = ({
         const token = getAuthToken();
         if (!token) {
             alert('Authentication required. Please log in.');
-
             return;
         }
+
+        // If making file public, trigger AI scan first
+        if (makePublic && !isPublic) {
+            setPendingPublicStatus(makePublic);
+            setShowScanModal(true);
+            return;
+        }
+
+        // If making file private or already public, proceed directly
+        await updateFileAccess(makePublic);
+    };
+
+    const updateFileAccess = async (makePublic: boolean) => {
+        const token = getAuthToken();
+        if (!token) {
+            alert('Authentication required. Please log in.');
+            return;
+        }
+
         try {
             setIsLoading(true);
             setIsPublic(makePublic);
@@ -135,7 +170,7 @@ const ShareModal: React.FC<ShareModalProps> = ({
             );
             const responseData = response.data as FileApiResponse;
             if (responseData?.success && responseData.data?.isPublic === makePublic) {
-
+                // Success - no additional action needed
             } else {
                 console.warn('API response mismatch or failure:', responseData);
                 setIsPublic(!makePublic);
@@ -154,6 +189,49 @@ const ShareModal: React.FC<ShareModalProps> = ({
         } finally {
             setIsLoading(false);
         }
+    };
+
+    const handleScanComplete = (result: ScanResult) => {
+        setScanResult(result);
+        setShowScanModal(false);
+
+        if (result.containsSensitiveData) {
+            setShowSensitiveAlert(true);
+        } else {
+            // No sensitive data found, proceed with making public
+            if (pendingPublicStatus !== null) {
+                updateFileAccess(pendingPublicStatus);
+                setPendingPublicStatus(null);
+            }
+        }
+    };
+
+    const handleProceedPublic = async () => {
+        setShowSensitiveAlert(false);
+        if (pendingPublicStatus !== null) {
+            await updateFileAccess(pendingPublicStatus);
+            setPendingPublicStatus(null);
+        }
+    };
+
+    const handleKeepPrivate = () => {
+        setShowSensitiveAlert(false);
+        setPendingPublicStatus(null);
+        setIsPublic(false); // Keep file private
+        setShowAccessOptions(false);
+    };
+
+    const handleCloseScanModal = () => {
+        setShowScanModal(false);
+        setPendingPublicStatus(null);
+        setIsPublic(false); // Revert to private if scan is cancelled
+    };
+
+    const handleCloseSensitiveAlert = () => {
+        setShowSensitiveAlert(false);
+        setPendingPublicStatus(null);
+        setIsPublic(false); // Revert to private if alert is cancelled
+        setShowAccessOptions(false);
     };
 
     const copyLink = async () => {
@@ -380,6 +458,27 @@ const ShareModal: React.FC<ShareModalProps> = ({
                     </button>
                 </div>
             </div>
+
+            {/* AI Scan Modal */}
+            <ScanWithAI
+                fileId={fileId}
+                filename={userData.name || 'Unknown File'}
+                onScanComplete={handleScanComplete}
+                onClose={handleCloseScanModal}
+                isOpen={showScanModal}
+            />
+
+            {/* Sensitive Data Alert Modal */}
+            {scanResult && (
+                <SensitiveDataAlert
+                    scanResult={scanResult}
+                    filename={userData.name || 'Unknown File'}
+                    onProceedPublic={handleProceedPublic}
+                    onKeepPrivate={handleKeepPrivate}
+                    onClose={handleCloseSensitiveAlert}
+                    isOpen={showSensitiveAlert}
+                />
+            )}
         </div>
     );
 };

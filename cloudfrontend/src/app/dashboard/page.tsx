@@ -6,6 +6,8 @@ import ProtectedRoute from '@/component/common/ProtectedRoute';
 import GoogleDriveFileItem from '@/component/Dashboard/Files/GoogleDriveFileItem';
 import DashboardFileTable from '@/component/Dashboard/Files/DashboardFileTable';
 import FilePreviewModal from '@/component/Dashboard/Files/FilePreviewModal';
+import { PartitionWithStats } from '@/types/partitions';
+import { api } from '@/utils/api';
 import axios from 'axios';
 
 interface FileData {
@@ -27,6 +29,7 @@ interface FileData {
     };
     relevanceScore?: number; // For AI search results
     starred?: boolean; // Track if file is starred
+    partition?: string; // Storage partition
 }
 
 interface PaginationData {
@@ -55,6 +58,8 @@ function DashboardContent() {
     const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
     const [timeframe, setTimeframe] = useState<'all' | 'today' | 'week' | 'month' | 'year'>('all');
     const [fileType, setFileType] = useState<'all' | 'images' | 'documents' | 'videos' | 'audio' | 'pdfs' | 'others'>('all');
+    const [selectedPartition, setSelectedPartition] = useState<string>('all');
+    const [availablePartitions, setAvailablePartitions] = useState<{ name: string; displayName: string }[]>([]);
     const [previewModalOpen, setPreviewModalOpen] = useState<boolean>(false);
     const [previewFile, setPreviewFile] = useState<FileData | null>(null);
     const [previewFileIndex, setPreviewFileIndex] = useState<number>(-1);
@@ -146,7 +151,28 @@ function DashboardContent() {
             }
         };
 
+        const fetchPartitions = async () => {
+            try {
+                const response = await api.partitions.getUsage();
+                if (response.data.success) {
+                    const partitionOptions = response.data.data.partitions.map((partition: PartitionWithStats) => ({
+                        name: partition.name,
+                        displayName: partition.name.charAt(0).toUpperCase() + partition.name.slice(1)
+                    }));
+                    setAvailablePartitions(partitionOptions);
+                }
+            } catch (err) {
+                console.error('Error fetching partitions:', err);
+                // Fallback to default partitions if API fails
+                setAvailablePartitions([
+                    { name: 'personal', displayName: 'Personal' },
+                    { name: 'work', displayName: 'Work' }
+                ]);
+            }
+        };
+
         fetchFiles();
+        fetchPartitions();
 
         // Listen for file uploads from other tabs/components
         const handleStorageChange = (e: StorageEvent) => {
@@ -156,6 +182,10 @@ function DashboardContent() {
                 localStorage.removeItem('fileUploaded');
                 // Refresh the files
                 fetchFiles();
+            } else if (e.key === 'partitionUpdated' && e.newValue) {
+                // Remove the flag and refresh partitions
+                localStorage.removeItem('partitionUpdated');
+                fetchPartitions();
             }
         };
 
@@ -207,6 +237,17 @@ function DashboardContent() {
         if (totalBytes < 1048576) return (totalBytes / 1024).toFixed(2) + " KB";
         if (totalBytes < 1073741824) return (totalBytes / 1048576).toFixed(2) + " MB";
         return (totalBytes / 1073741824).toFixed(2) + " GB";
+    };
+
+    // Filter files by partition
+    const filterByPartition = (files: FileData[]) => {
+        if (selectedPartition === 'all') return files;
+
+        return files.filter(file => {
+            // Check if file has partition field, default to 'personal' if not
+            const filePartition = file.partition || 'personal';
+            return filePartition === selectedPartition;
+        });
     };
 
     // Filter files by timeframe
@@ -266,6 +307,9 @@ function DashboardContent() {
     // Filter and sort files
     const filteredAndSortedFiles = (() => {
         let fileList = isSearching ? searchResults : files;
+
+        // Apply partition filter
+        fileList = filterByPartition(fileList);
 
         // Apply timeframe filter
         fileList = filterByTimeframe(fileList);
@@ -626,12 +670,44 @@ function DashboardContent() {
                             </div>
                         </div>
 
+                        {/* Partition Filter */}
+                        <div className="flex items-center space-x-2">
+                            <label className="text-xs sm:text-sm font-medium text-gray-700 flex items-center whitespace-nowrap">
+                                <svg className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-1.5 text-[#18b26f]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 11H5m14-7H3a2 2 0 00-2 2v12a2 2 0 002 2h16a2 2 0 002-2V6a2 2 0 00-2-2z" />
+                                </svg>
+                                Partition:
+                            </label>
+                            <div className="relative">
+                                <select
+                                    value={selectedPartition}
+                                    onChange={(e) => setSelectedPartition(e.target.value)}
+                                    className="appearance-none text-xs sm:text-sm bg-white border border-gray-200 rounded-lg px-2 sm:px-3 py-1.5 sm:py-2 pr-6 sm:pr-8 
+                                             text-gray-700 hover:border-[#18b26f]/40 focus:border-[#18b26f] focus:outline-none 
+                                             focus:ring-2 focus:ring-[#18b26f]/30 transition-all cursor-pointer shadow-sm min-w-[80px] sm:min-w-[120px]"
+                                >
+                                    <option value="all">All Partitions</option>
+                                    {availablePartitions.map((partition) => (
+                                        <option key={partition.name} value={partition.name}>
+                                            {partition.displayName}
+                                        </option>
+                                    ))}
+                                </select>
+                                <div className="absolute inset-y-0 right-0 flex items-center px-1 sm:px-2 pointer-events-none text-gray-500">
+                                    <svg className="h-2.5 w-2.5 sm:h-3 sm:w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                                    </svg>
+                                </div>
+                            </div>
+                        </div>
+
                         {/* Clear Filters Button - Desktop */}
-                        {(timeframe !== 'all' || fileType !== 'all') && (
+                        {(timeframe !== 'all' || fileType !== 'all' || selectedPartition !== 'all') && (
                             <button
                                 onClick={() => {
                                     setTimeframe('all');
                                     setFileType('all');
+                                    setSelectedPartition('all');
                                 }}
                                 className="text-xs sm:text-sm text-[#18b26f] hover:text-[#149d5f] font-medium transition-colors duration-200 flex items-center space-x-1 whitespace-nowrap px-2 py-1"
                             >
@@ -751,12 +827,44 @@ function DashboardContent() {
                             </select>
                         </div>
 
+                        {/* Partition Filter - Chip Style */}
+                        <div className="relative">
+                            <button
+                                onClick={() => document.getElementById('partitionDropdownMobile')?.click()}
+                                className={`flex items-center space-x-1 text-xs px-3 py-1.5 rounded-full border 
+                                    ${selectedPartition !== 'all'
+                                        ? 'border-[#18b26f] bg-[#e6f5ee] text-[#18b26f] shadow-sm'
+                                        : 'border-gray-200 bg-white text-gray-700 hover:bg-gray-50'} 
+                                    focus:outline-none focus:ring-2 focus:ring-[#18b26f]/20 shadow-sm transition-colors`}
+                            >
+                                <span className="font-medium">Partition</span>
+                                {selectedPartition !== 'all' && (
+                                    <span className="text-xs font-medium ml-1">&bull;</span>
+                                )}
+                                <svg className="h-3 w-3 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                                </svg>
+                            </button>
+
+                            <select
+                                id="partitionDropdownMobile"
+                                value={selectedPartition}
+                                onChange={(e) => setSelectedPartition(e.target.value)}
+                                className="absolute z-10 text-black opacity-0 top-0 left-0 w-full h-full cursor-pointer"
+                            >
+                                <option value="all">All Partitions</option>
+                                <option value="personal">Personal</option>
+                                <option value="work">Work</option>
+                            </select>
+                        </div>
+
                         {/* Clear Filters Button - Mobile */}
-                        {(timeframe !== 'all' || fileType !== 'all') && (
+                        {(timeframe !== 'all' || fileType !== 'all' || selectedPartition !== 'all') && (
                             <button
                                 onClick={() => {
                                     setTimeframe('all');
                                     setFileType('all');
+                                    setSelectedPartition('all');
                                 }}
                                 className="text-xs text-[#18b26f] hover:text-[#149d5f] font-medium transition-colors duration-200 flex items-center space-x-1 whitespace-nowrap px-3 py-1.5 rounded-full border border-[#18b26f]/20 hover:border-[#18b26f]/40 shadow-sm"
                             >

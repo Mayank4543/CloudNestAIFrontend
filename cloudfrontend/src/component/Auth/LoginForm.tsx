@@ -7,7 +7,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import Toast from '@/component/common/Toast';
 
 // API Base URL from environment variables
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ;
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
 export default function LoginForm() {
     const [email, setEmail] = useState('');
@@ -71,10 +71,8 @@ export default function LoginForm() {
                     showToastMessage('Google login successful! Redirecting...', 'success');
                     setIsLoading(false);
 
-                    // Redirect to dashboard after showing success message
-                    setTimeout(() => {
-                        router.push('/dashboard');
-                    }, 1500);
+                    // Immediate redirect
+                    router.push('/dashboard');
                 } else {
                     showToastMessage(data.message || 'Google authentication failed', 'error');
                     setIsLoading(false);
@@ -175,19 +173,13 @@ export default function LoginForm() {
                 if (email === 'admin@cloudnest.ai' || data.data.user?.role === 'admin') {
                     storage.setItem('adminSession', 'true');
 
-                    // Redirect after showing success message
-                    setTimeout(() => {
-
-                        router.push('/admin');
-                    }, 1500);
+                    // Redirect immediately
+                    router.push('/admin');
                 } else {
                     storage.setItem('userSession', 'true');
 
-                    // Redirect after showing success message
-                    setTimeout(() => {
-
-                        router.push('/dashboard');
-                    }, 1500);
+                    // Redirect immediately
+                    router.push('/dashboard');
                 }
                 return; // Important: return here to prevent further execution
             } else {
@@ -232,7 +224,7 @@ export default function LoginForm() {
                             type="email"
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-[#18b26f] focus:border-[#18b26f]"
+                            className="w-full px-3 py-2 border text-black border-gray-300 rounded-md focus:outline-none focus:ring-[#18b26f] focus:border-[#18b26f]"
                             placeholder="you@example.com"
                         />
                     </div>
@@ -319,9 +311,9 @@ export default function LoginForm() {
                     </p>
                 )}
 
-                <div className="mt-4 text-center text-xs text-gray-500">
+                {/* <div className="mt-4 text-center text-xs text-gray-500">
                     <p>Admin access: admin@cloudnest.ai / admin123</p>
-                </div>
+                </div> */}
             </div>
         </>
     );

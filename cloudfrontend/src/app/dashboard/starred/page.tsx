@@ -260,6 +260,36 @@ function StarredFilesContent() {
         link.href = downloadUrl;
         link.download = fileName;
         link.style.display = 'none';
+
+        // Add authorization header by fetching the file first
+        fetch(downloadUrl, {
+            headers: {
+                'Authorization': `Bearer ${authToken}`
+            }
+        })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Download failed');
+                }
+                return response.blob();
+            })
+            .then(blob => {
+                // Create object URL from blob
+                const url = window.URL.createObjectURL(blob);
+                link.href = url;
+
+                // Append to body, click, and remove
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+
+                // Clean up the object URL
+                window.URL.revokeObjectURL(url);
+            })
+            .catch(error => {
+                console.error('Download error:', error);
+                setError('Failed to download file. Please try again.');
+            });
     };
 
     const handleRename = async (fileId: string, newName: string) => {

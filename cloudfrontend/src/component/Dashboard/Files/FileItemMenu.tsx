@@ -193,19 +193,6 @@ const FileItemMenu: React.FC<FileItemMenuProps> = ({
         setIsMenuOpen(false);
     };
 
-    const handleRename = () => {
-        const newName = prompt('Enter new name:', file.originalname);
-        if (newName && newName !== file.originalname) {
-            onRename?.(file._id, newName);
-        }
-        setIsMenuOpen(false);
-    };
-
-    const handleCopy = () => {
-        onCopy?.(file._id);
-        setIsMenuOpen(false);
-    };
-
     const handleDelete = () => {
         onDelete(file._id, file.originalname);
         setIsMenuOpen(false);
@@ -229,14 +216,6 @@ const FileItemMenu: React.FC<FileItemMenuProps> = ({
     const handleShareFile = () => {
         if (onShare) {
             onShare(file._id);
-            setIsMenuOpen(false);
-        }
-    };
-
-    const handleMoveFile = () => {
-        if (onMove) {
-            // For simplicity, we'll just call onMove - in a real app you'd show a folder picker UI
-            onMove(file._id, ''); // Second param would typically be destination folder ID
             setIsMenuOpen(false);
         }
     };
@@ -416,36 +395,6 @@ const FileItemMenu: React.FC<FileItemMenuProps> = ({
                         }
                         label="Download"
                         onClick={handleDownload}
-                    />
-
-                    <MenuItem
-                        icon={
-                            <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                            </svg>
-                        }
-                        label="Rename"
-                        onClick={handleRename}
-                    />
-
-                    <MenuItem
-                        icon={
-                            <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2" />
-                            </svg>
-                        }
-                        label="Make a copy"
-                        onClick={handleCopy}
-                    />
-
-                    <MenuItem
-                        icon={
-                            <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
-                            </svg>
-                        }
-                        label="Move to folder"
-                        onClick={handleMoveFile}
                     />
 
                     <MenuItem

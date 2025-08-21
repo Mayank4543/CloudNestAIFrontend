@@ -31,12 +31,9 @@ function ProfileContent() {
     // Removed unused debugInfo state
 
     useEffect(() => {
-
-
         // Gather debug info
         const authToken = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
         const userSession = localStorage.getItem('userSession') || sessionStorage.getItem('userSession');
-
         // Debug information now logged instead of stored in state
         console.log('Auth Token:', authToken ? 'Present' : 'Missing');
         console.log('User Session:', userSession ? 'Active' : 'Inactive');

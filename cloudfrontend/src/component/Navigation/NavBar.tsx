@@ -42,7 +42,7 @@ const NavBar: React.FC = () => {
                     <div className="flex items-center">
                         <div className="hidden md:ml-6 md:flex md:space-x-8">
                             <Link
-                                href="/"
+                                href="/dashboard"
                                 className={`inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium ${pathname === '/'
                                     ? 'border-blue-500 text-gray-900'
                                     : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'
@@ -69,6 +69,16 @@ const NavBar: React.FC = () => {
                                     }`}
                             >
                                 Insights
+                            </Link>
+
+                            <Link
+                                href="/docs"
+                                className={`inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium ${pathname === '/docs'
+                                    ? 'border-[#18b26f] text-gray-900'
+                                    : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'
+                                    }`}
+                            >
+                                Docs
                             </Link>
 
                             <Link
@@ -178,6 +188,17 @@ const NavBar: React.FC = () => {
                             }`}
                     >
                         Insights
+                    </Link>
+
+                    <Link
+                        href="/docs"
+                        onClick={closeMobileMenu}
+                        className={`block pl-3 pr-4 py-2 border-l-4 text-base font-medium ${pathname === '/docs'
+                            ? 'bg-[#e6f5ee] border-[#18b26f] text-[#18b26f]'
+                            : 'border-transparent text-gray-600 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-800'
+                            }`}
+                    >
+                        Docs
                     </Link>
                 </div>
             </div>

@@ -4,13 +4,12 @@
 import React from 'react';
 import Link from 'next/link';
 
-
 export default function Home() {
 
   return (
-    <div className="font-['Inter',system-ui,sans-serif]">
-      {/* Hero Section */}
-      <div className="bg-white py-20">
+    <div className="font-['Inter',system-ui,sans-serif] will-change-auto">
+      {/* Hero Section - Layout Shift Optimized */}
+      <div className="bg-white py-20 min-h-[600px]">
         <div className="container mx-auto px-4 max-w-6xl">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-10 items-center">
             <div>
@@ -78,6 +77,7 @@ export default function Home() {
         </div>
       </div>
 
+
       {/* Features Section */}
       <div className="bg-gray-50 py-20">
         <div className="container mx-auto px-4 max-w-6xl">
@@ -130,15 +130,26 @@ export default function Home() {
           </div>
 
           <div className="mt-12 text-center">
-            <Link
-              href="/dashboard"
-              className="inline-flex items-center px-6 py-3 bg-[#18b26f] text-white font-medium rounded-md hover:bg-[#149d5f] transition-colors"
-            >
-              Get Started
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" className="w-5 h-5 ml-2">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
-              </svg>
-            </Link>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <Link
+                href="/dashboard"
+                className="inline-flex items-center px-6 py-3 bg-[#18b26f] text-white font-medium rounded-md hover:bg-[#149d5f] transition-colors"
+              >
+                Get Started
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" className="w-5 h-5 ml-2">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                </svg>
+              </Link>
+              <Link
+                href="/docs"
+                className="inline-flex items-center px-6 py-3 border border-[#18b26f] text-[#18b26f] font-medium rounded-md hover:bg-[#e6f5ee] transition-colors"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" className="w-5 h-5 mr-2">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C20.832 18.477 19.246 18 17.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                </svg>
+                View Documentation
+              </Link>
+            </div>
           </div>
         </div>
       </div>
@@ -291,15 +302,17 @@ export default function Home() {
                 Get Started Now
               </Link>
               <Link
-                href="#"
+                href="/docs"
                 className="px-6 py-3 border border-white text-white font-medium rounded-md hover:bg-[#149d5f] transition-colors text-center"
               >
-                Schedule a Demo
+                View Documentation
               </Link>
             </div>
           </div>
         </div>
       </div>
+
+
     </div>
   );
 }

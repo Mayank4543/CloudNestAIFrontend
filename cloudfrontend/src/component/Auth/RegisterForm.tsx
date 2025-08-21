@@ -7,7 +7,7 @@ import { useRouter } from 'next/navigation';
 import Toast from '@/component/common/Toast';
 
 // API Base URL from environment variables
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ;
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
 export default function RegisterForm() {
     const [name, setName] = useState('');
@@ -62,10 +62,8 @@ export default function RegisterForm() {
                     showToastMessage('Google registration successful! Redirecting...', 'success');
                     setIsLoading(false);
 
-                    // Redirect to dashboard after showing success message
-                    setTimeout(() => {
-                        router.push('/dashboard');
-                    }, 1500);
+                    // Immediate redirect
+                    router.push('/dashboard');
                 } else {
                     showToastMessage(data.message || 'Google authentication failed', 'error');
                     setIsLoading(false);
@@ -164,10 +162,8 @@ export default function RegisterForm() {
                 showToastMessage('Account created successfully! Redirecting...', 'success');
                 setIsLoading(false);
 
-                // Redirect to dashboard after showing success message
-                setTimeout(() => {
-                    router.push('/dashboard');
-                }, 1500);
+                // Immediate redirect
+                router.push('/dashboard');
                 return;
             } else {
                 showToastMessage(data.message || 'Registration failed. Please try again.', 'error');

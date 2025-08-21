@@ -19,33 +19,39 @@ export default function ProtectedRoute({
     const router = useRouter();
 
     useEffect(() => {
-        const checkAuth = () => {
-            // Check for auth token in both localStorage and sessionStorage
-            const authToken = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
-            const userSession = localStorage.getItem('userSession') || sessionStorage.getItem('userSession');
-            const adminSession = localStorage.getItem('adminSession') || sessionStorage.getItem('adminSession');
+        const checkAuth = async () => {
+            try {
+                // Check for auth token in both localStorage and sessionStorage
+                const authToken = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
+                const userSession = localStorage.getItem('userSession') || sessionStorage.getItem('userSession');
+                const adminSession = localStorage.getItem('adminSession') || sessionStorage.getItem('adminSession');
 
-            if (!requireAuth) {
+                if (!requireAuth) {
+                    setIsAuthorized(true);
+                    setIsLoading(false);
+                    return;
+                }
+
+                if (!authToken || !userSession) {
+                    // Not authenticated, redirect to login
+                    router.push('/auth/login');
+                    return;
+                }
+
+                if (requireAdmin && !adminSession) {
+                    // Not admin, redirect to dashboard
+                    router.push('/dashboard');
+                    return;
+                }
+
+                // User is authorized
                 setIsAuthorized(true);
-                setIsLoading(false);
-                return;
-            }
-
-            if (!authToken || !userSession) {
-                // Not authenticated, redirect to login
+            } catch (error) {
+                console.error('Auth check error:', error);
                 router.push('/auth/login');
-                return;
+            } finally {
+                setIsLoading(false);
             }
-
-            if (requireAdmin && !adminSession) {
-                // Not admin, redirect to dashboard
-                router.push('/dashboard');
-                return;
-            }
-
-            // User is authorized
-            setIsAuthorized(true);
-            setIsLoading(false);
         };
 
         checkAuth();
@@ -53,8 +59,14 @@ export default function ProtectedRoute({
 
     if (isLoading) {
         return (
-            <div className="min-h-screen flex items-center justify-center">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#18b26f]"></div>
+            <div className="min-h-screen flex items-center justify-center bg-[#f9fafb]">
+                <div className="text-center">
+                    <div className="relative">
+                        <div className="w-12 h-12 border-4 border-gray-200 border-t-[#18b26f] rounded-full animate-spin will-change-transform"></div>
+                        <div className="absolute inset-0 w-12 h-12 border-4 border-transparent border-l-[#18b26f] rounded-full animate-pulse"></div>
+                    </div>
+                   
+                </div>
             </div>
         );
     }

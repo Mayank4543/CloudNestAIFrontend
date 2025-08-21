@@ -208,18 +208,26 @@ function DashboardContent() {
 
     // Handle search results from GlobalSearch component
     const handleSearchResults = (results: FileData[], type: 'keyword' | 'semantic') => {
-
-
         // Normalize tags for search results
         const normalizedResults = results.map(file => ({
             ...file,
             tags: normalizeTags(file.tags)
         }));
 
-        setSearchResults(normalizedResults);
-        setSearchType(type);
-        setIsSearching(normalizedResults.length > 0);
+        // Sort semantic search results by relevance score (descending order)
+        let sortedResults = normalizedResults;
+        if (type === 'semantic') {
+            sortedResults = normalizedResults.sort((a, b) => {
+                // Sort by relevance score in descending order (highest score first)
+                const scoreA = a.relevanceScore || 0;
+                const scoreB = b.relevanceScore || 0;
+                return scoreB - scoreA;
+            });
+        }
 
+        setSearchResults(sortedResults);
+        setSearchType(type);
+        setIsSearching(sortedResults.length > 0);
     };
 
     // Clear search results when search is cleared
@@ -317,22 +325,28 @@ function DashboardContent() {
         // Apply file type filter
         fileList = filterByType(fileList);
 
-        // Apply sorting
-        return fileList.sort((a, b) => {
-            let comparison = 0;
-            switch (sortBy) {
-                case 'name':
-                    comparison = a.originalname.localeCompare(b.originalname);
-                    break;
-                case 'date':
-                    comparison = new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
-                    break;
-                case 'size':
-                    comparison = a.size - b.size;
-                    break;
-            }
-            return sortOrder === 'asc' ? comparison : -comparison;
-        });
+        // Apply sorting - but preserve semantic search order
+        if (isSearching && searchType === 'semantic') {
+            // For semantic search, preserve the relevance-based order
+            return fileList;
+        } else {
+            // For regular files or keyword search, apply normal sorting
+            return fileList.sort((a, b) => {
+                let comparison = 0;
+                switch (sortBy) {
+                    case 'name':
+                        comparison = a.originalname.localeCompare(b.originalname);
+                        break;
+                    case 'date':
+                        comparison = new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+                        break;
+                    case 'size':
+                        comparison = a.size - b.size;
+                        break;
+                }
+                return sortOrder === 'asc' ? comparison : -comparison;
+            });
+        }
     })();
 
     // Handle file deletion
@@ -390,7 +404,35 @@ function DashboardContent() {
         link.download = fileName;
         link.style.display = 'none';
 
+        // Add authorization header by fetching the file first
+        fetch(downloadUrl, {
+            headers: {
+                'Authorization': `Bearer ${authToken}`
+            }
+        })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Download failed');
+                }
+                return response.blob();
+            })
+            .then(blob => {
+                // Create object URL from blob
+                const url = window.URL.createObjectURL(blob);
+                link.href = url;
 
+                // Append to body, click, and remove
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+
+                // Clean up the object URL
+                window.URL.revokeObjectURL(url);
+            })
+            .catch(error => {
+                console.error('Download error:', error);
+                setError('Failed to download file. Please try again.');
+            });
     };
 
     const handleRename = async (fileId: string, newName: string) => {
@@ -559,6 +601,36 @@ function DashboardContent() {
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
                             </svg>
                             Upload
+                        </a>
+                    </div>
+                </div>
+
+                {/* Mobile Quick Access Section */}
+                <div className="md:hidden mb-6 bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl p-4 border border-blue-100">
+                    <h3 className="text-base font-semibold text-gray-900 mb-3 flex items-center">
+                        <svg className="w-5 h-5 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                        </svg>
+                        Quick Actions
+                    </h3>
+                    <div className="grid grid-cols-2 gap-3">
+                        <a
+                            href="/upload"
+                            className="flex flex-col items-center p-3 bg-white rounded-lg border border-gray-200 hover:border-[#18b26f] hover:bg-green-50 transition-all duration-200 text-center"
+                        >
+                            <svg className="w-6 h-6 text-[#18b26f] mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
+                            </svg>
+                            <span className="text-sm font-medium text-gray-900">Upload</span>
+                        </a>
+                        <a
+                            href="/dashboard/partitions"
+                            className="flex flex-col items-center p-3 bg-white rounded-lg border border-gray-200 hover:border-orange-500 hover:bg-orange-50 transition-all duration-200 text-center"
+                        >
+                            <svg className="w-6 h-6 text-orange-500 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 11H5m14-7H3a2 2 0 00-2 2v12a2 2 0 002 2h16a2 2 0 002-2V6a2 2 0 00-2-2z" />
+                            </svg>
+                            <span className="text-sm font-medium text-gray-900">Partitions</span>
                         </a>
                     </div>
                 </div>

@@ -16,18 +16,23 @@ const apiClient = axios.create({
 // Request interceptor to add authentication token
 apiClient.interceptors.request.use(
     (config) => {
-
+        // Add debugging for upload requests
+        if (config.url?.includes('/upload')) {
+            console.log('🔍 Upload request config:', {
+                url: config.url,
+                baseURL: config.baseURL,
+                method: config.method,
+                headers: config.headers
+            });
+        }
 
         // Check both localStorage and sessionStorage
         const localToken = localStorage.getItem('authToken');
         const sessionToken = sessionStorage.getItem('authToken');
         const token = localToken || sessionToken;
 
-
-
         if (token && config.headers) {
             config.headers.Authorization = `Bearer ${token}`;
-
         }
 
         return config;
@@ -44,10 +49,21 @@ apiClient.interceptors.response.use(
         return response;
     },
     (error) => {
+        // Log detailed error information for debugging
+        console.error('❌ API Response Error:', {
+            message: error.message,
+            status: error.response?.status,
+            statusText: error.response?.statusText,
+            data: error.response?.data,
+            config: {
+                url: error.config?.url,
+                method: error.config?.method,
+                baseURL: error.config?.baseURL
+            }
+        });
+
         // Handle authentication errors
         if (error.response?.status === 401) {
-
-
             // Don't redirect for AI tagging requests - let the component handle it
             const isAITaggingRequest = error.config?.url?.includes('/test-ai-tagging');
 
@@ -69,6 +85,10 @@ apiClient.interceptors.response.use(
 
 // API endpoints
 export const api = {
+    // Health check and CORS test
+    health: () => apiClient.get('/health'),
+    corsTest: () => apiClient.get('/api/files/cors-test'),
+
     // File operations
     files: {
         getAll: (params?: { page?: number; limit?: number }) =>
@@ -79,8 +99,16 @@ export const api = {
             if (partition) {
                 formData.append('partition', partition);
             }
+
+            console.log('🚀 Starting file upload...', {
+                partition,
+                baseURL: API_BASE_URL,
+                formDataKeys: Array.from(formData.keys())
+            });
+
             return apiClient.post('/api/files/upload', formData, {
-                headers: { 'Content-Type': 'multipart/form-data' }
+                headers: { 'Content-Type': 'multipart/form-data' },
+                timeout: 60000 // 60 seconds for file uploads
             });
         },
 

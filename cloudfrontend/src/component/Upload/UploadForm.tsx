@@ -180,6 +180,23 @@ const UploadForm: React.FC = () => {
         return [...new Set(allTags)];
     };
 
+    // Test CORS connectivity
+    const testCORSConnection = async () => {
+        try {
+            console.log('🧪 Testing CORS connection...');
+            const healthResponse = await api.health();
+            console.log('✅ Health check passed:', healthResponse.data);
+
+            const corsResponse = await api.corsTest();
+            console.log('✅ CORS test passed:', corsResponse.data);
+
+            showToastMessage('Connection test successful!', 'success');
+        } catch (error) {
+            console.error('❌ Connection test failed:', error);
+            showToastMessage('Connection test failed. Check console for details.', 'error');
+        }
+    };
+
     // Handle form submission
     const handleSubmit = async (e: FormEvent) => {
         e.preventDefault();
@@ -204,8 +221,18 @@ const UploadForm: React.FC = () => {
         setResponseMessage('');
 
         try {
-            const formData = new FormData();
+            // Debug: Test connection before upload
+            console.log('🔍 Upload attempt details:', {
+                fileCount: files.length,
+                fileName: files[0]?.name,
+                fileSize: files[0]?.size,
+                fileType: files[0]?.type,
+                partition: selectedPartition,
+                hasAuthToken: !!authToken,
+                apiBaseUrl: process.env.NEXT_PUBLIC_API_BASE_URL
+            });
 
+            const formData = new FormData();
 
             if (files[0]) {
                 formData.append('file', files[0]);
@@ -270,18 +297,36 @@ const UploadForm: React.FC = () => {
             }
         } catch (error: unknown) {
             setUploadSuccess(false);
-            console.error('Upload failed:', error);
+            console.error('❌ Upload failed:', error);
 
             if (isAxiosError(error)) {
-                const errorResponse = error.response?.data as { message?: string } | undefined;
-                const errorMsg = errorResponse?.message || 'Network error occurred. Please try again.';
+                console.error('❌ Axios error details:', {
+                    status: error.response?.status,
+                    statusText: error.response?.statusText,
+                    data: error.response?.data,
+                    message: error.message,
+                    code: error.code
+                });
 
-                // Handle authentication errors specifically
-                if (error.response?.status === 401) {
+                const errorResponse = error.response?.data as { message?: string; debug?: Record<string, unknown> } | undefined;                // Handle different types of errors
+                if (error.code === 'ERR_NETWORK') {
+                    const networkErrorMsg = 'Network error: Unable to connect to server. Please check your internet connection and try again.';
+                    setErrorMessage(networkErrorMsg);
+                    showToastMessage(networkErrorMsg, 'error');
+                } else if (error.response?.status === 401) {
                     const authErrorMsg = 'Authentication failed. Please log in again.';
                     setErrorMessage(authErrorMsg);
                     showToastMessage(authErrorMsg, 'error');
+                } else if (error.response?.status === 503) {
+                    const serviceErrorMsg = 'Server is temporarily unavailable. Please try again in a few minutes.';
+                    setErrorMessage(serviceErrorMsg);
+                    showToastMessage(serviceErrorMsg, 'error');
+                } else if (error.message.includes('CORS')) {
+                    const corsErrorMsg = 'CORS error: Unable to upload file. Please contact support.';
+                    setErrorMessage(corsErrorMsg);
+                    showToastMessage(corsErrorMsg, 'error');
                 } else {
+                    const errorMsg = errorResponse?.message || 'Network error occurred. Please try again.';
                     setErrorMessage(errorMsg);
                     showToastMessage(errorMsg, 'error');
                 }
@@ -324,15 +369,28 @@ const UploadForm: React.FC = () => {
                             </svg>
                             Upload Files
                         </h2>
-                        <a
-                            href="/dashboard"
-                            className="inline-flex items-center text-sm text-white/80 hover:text-white transition-all duration-150 bg-white/10 hover:bg-white/20 px-3 py-1 rounded-lg"
-                        >
-                            <svg className="mr-2 h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 15l-3-3m0 0l3-3m-3 3h8M3 12a9 9 0 1118 0 9 9 0 01-18 0z" />
-                            </svg>
-                            Back to Dashboard
-                        </a>
+                        <div className="flex items-center space-x-2">
+                            {/* Debug button */}
+                            <button
+                                onClick={testCORSConnection}
+                                className="inline-flex items-center text-sm text-white/80 hover:text-white transition-all duration-150 bg-white/10 hover:bg-white/20 px-3 py-1 rounded-lg"
+                                title="Test server connection"
+                            >
+                                <svg className="mr-2 h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                                Test Connection
+                            </button>
+                            <a
+                                href="/dashboard"
+                                className="inline-flex items-center text-sm text-white/80 hover:text-white transition-all duration-150 bg-white/10 hover:bg-white/20 px-3 py-1 rounded-lg"
+                            >
+                                <svg className="mr-2 h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 15l-3-3m0 0l3-3m-3 3h8M3 12a9 9 0 1118 0 9 9 0 01-18 0z" />
+                                </svg>
+                                Back to Dashboard
+                            </a>
+                        </div>
                     </div>
                 </div>
 

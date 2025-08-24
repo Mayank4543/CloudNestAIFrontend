@@ -435,44 +435,7 @@ function DashboardContent() {
             });
     };
 
-    const handleRename = async (fileId: string, newName: string) => {
-        try {
-            const authToken = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
-
-            if (!authToken) {
-                setError('Authentication required. Please log in first.');
-                return;
-            }
-
-            const response = await axios.patch<ApiResponse>(
-                `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/files/${fileId}`,
-                { originalname: newName },
-                {
-                    headers: {
-                        'Authorization': `Bearer ${authToken}`,
-                    },
-                }
-            );
-
-            if (response.data && response.data.success) {
-                setFiles(prevFiles =>
-                    prevFiles.map(f =>
-                        f._id === fileId ? { ...f, originalname: newName } : f
-                    )
-                );
-                setSearchResults(prevResults =>
-                    prevResults.map(f =>
-                        f._id === fileId ? { ...f, originalname: newName } : f
-                    )
-                );
-            } else {
-                setError('Failed to rename file. Please try again.');
-            }
-        } catch (err: Error | unknown) {
-            console.error('Error renaming file:', err);
-            setError('Failed to rename file. Please try again.');
-        }
-    };
+   
 
     const handleToggleStar = async (fileId: string) => {
         try {
@@ -530,13 +493,7 @@ function DashboardContent() {
         }
     };
 
-    const handleCopy = (fileId: string) => {
-        // Copy file URL to clipboard
-        const fileUrl = `${window.location.origin}/file/${fileId}`;
-        navigator.clipboard.writeText(fileUrl).then(() => {
-            console.log('File URL copied to clipboard');
-        });
-    };
+ 
 
     const handleShare = (fileId: string) => {
         // For now, just copy the shareable URL
@@ -562,10 +519,7 @@ function DashboardContent() {
         }
     };
 
-    const handleMove = (fileId: string) => {
-        // Placeholder for move functionality
-        console.log('Move file functionality not yet implemented for ID:', fileId);
-    };
+   
 
     return (
         <DashboardLayout onSearchResults={handleSearchResults} onClearSearch={clearSearchResults}>
@@ -1030,11 +984,10 @@ function DashboardContent() {
                                 files={filteredAndSortedFiles}
                                 onDownload={handleDownload}
                                 onDelete={handleDelete}
-                                onRename={handleRename}
-                                onCopy={handleCopy}
+                               
                                 onShare={handleShare}
                                 onPreview={handlePreview}
-                                onMove={handleMove}
+                              
                                 onToggleStar={handleToggleStar}
                                 searchType={searchType}
                             />
@@ -1048,11 +1001,11 @@ function DashboardContent() {
                                         viewMode="grid"
                                         onDownload={handleDownload}
                                         onDelete={handleDelete}
-                                        onRename={handleRename}
-                                        onCopy={handleCopy}
+
+
                                         onShare={handleShare}
                                         onPreview={handlePreview}
-                                        onMove={handleMove}
+
                                         onToggleStar={handleToggleStar}
                                     />
                                 ))}
@@ -1206,16 +1159,7 @@ function DashboardContent() {
                     setPreviewFile(null);
                     setPreviewFileIndex(-1);
                 }}
-                onRename={(fileId, newName) => {
-                    handleRename(fileId, newName);
-                    // Update the preview file with new name if it's still the same file
-                    if (previewFile && previewFile._id === fileId) {
-                        setPreviewFile({
-                            ...previewFile,
-                            originalname: newName
-                        });
-                    }
-                }}
+                
                 allFiles={filteredAndSortedFiles}
                 currentIndex={previewFileIndex}
                 onNavigate={handleNavigatePreview}

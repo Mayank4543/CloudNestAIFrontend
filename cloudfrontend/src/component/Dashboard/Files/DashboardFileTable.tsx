@@ -39,11 +39,13 @@ interface DashboardFileTableProps {
     files: FileData[];
     onDownload: (fileId: string, fileName: string) => void;
     onDelete: (fileId: string, fileName: string) => void;
-    onRename: (fileId: string, newName: string) => void;
-    onCopy: (fileId: string) => void;
+    // These props are defined but not currently used in the component
+    // Commenting them out to fix the unused variables warning
+    // onRename: (fileId: string, newName: string) => void;
+    // onCopy: (fileId: string) => void;
     onPreview: (file: FileData) => void;
     onShare: (fileId: string) => void;
-    onMove: (fileId: string, destinationFolderId: string) => void;
+    // onMove: (fileId: string, destinationFolderId: string) => void;
     onToggleStar?: (fileId: string) => void; // Add this prop
     searchType?: 'keyword' | 'semantic'; // Add search type prop
 }
@@ -52,11 +54,11 @@ const DashboardFileTable: React.FC<DashboardFileTableProps> = ({
     files,
     onDownload,
     onDelete,
-    onRename,
-    onCopy,
+    // onRename,
+    // onCopy,
     onPreview,
     onShare,
-    onMove,
+    // onMove,
     onToggleStar,
     searchType = 'keyword'
 }) => {

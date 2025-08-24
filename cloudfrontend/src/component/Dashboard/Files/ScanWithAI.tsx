@@ -35,19 +35,25 @@ const ScanWithAI: React.FC<ScanWithAIProps> = ({
         setScanCompleted(false);
 
         try {
+            console.log('🔍 Starting AI scan for file:', fileId);
             const response = await api.files.scanSensitiveData(fileId);
+            console.log('📄 Scan API response:', response.data);
 
             if (response.data.success) {
                 setScanCompleted(true);
+                console.log('✅ Scan completed successfully');
+
                 // Wait a moment to show success, then notify parent
                 setTimeout(() => {
+                    console.log('📤 Notifying parent with scan result:', response.data.data.scanResult);
                     onScanComplete(response.data.data.scanResult);
-                }, 1000);
+                }, 1500); // Increased delay to better show success message
             } else {
+                console.error('❌ Scan failed:', response.data.message);
                 setError(response.data.message || 'Failed to scan file');
             }
         } catch (error) {
-            console.error('Error scanning file:', error);
+            console.error('❌ Error scanning file:', error);
             setError('Failed to scan file for sensitive data. Please try again.');
         } finally {
             setIsScanning(false);

@@ -26,7 +26,14 @@ const SensitiveDataAlert: React.FC<SensitiveDataAlertProps> = ({
     onClose,
     isOpen
 }) => {
-    if (!isOpen) return null;
+    console.log('🚨 SensitiveDataAlert render:', { isOpen, scanResult, filename });
+
+    if (!isOpen) {
+        console.log('❌ SensitiveDataAlert not rendering - isOpen is false');
+        return null;
+    }
+
+    console.log('✅ SensitiveDataAlert rendering with result:', scanResult);
 
     const getRiskColor = (riskLevel: string) => {
         switch (riskLevel) {
@@ -96,7 +103,7 @@ const SensitiveDataAlert: React.FC<SensitiveDataAlertProps> = ({
                     <div className="flex items-center">
                         {getRiskIcon(scanResult.riskLevel)}
                         <h2 className="text-lg font-semibold text-gray-900 ml-3">
-                            {scanResult.containsSensitiveData ? 'Sensitive Data Detected' : 'Scan Complete'}
+                            {scanResult.containsSensitiveData ? 'Sensitive Data Detected' : 'Scan Complete - No Sensitive Data Found'}
                         </h2>
                     </div>
                     <button onClick={onClose} className="text-gray-400 hover:text-gray-500">
@@ -139,12 +146,12 @@ const SensitiveDataAlert: React.FC<SensitiveDataAlertProps> = ({
 
                     {/* Recommendation */}
                     <div className={`border-l-4 pl-4 py-3 mb-4 ${scanResult.containsSensitiveData
-                            ? `border-${getRiskColor(scanResult.riskLevel)}-500 bg-${getRiskColor(scanResult.riskLevel)}-50`
-                            : 'border-green-500 bg-green-50'
+                        ? `border-${getRiskColor(scanResult.riskLevel)}-500 bg-${getRiskColor(scanResult.riskLevel)}-50`
+                        : 'border-green-500 bg-green-50'
                         }`}>
                         <p className={`text-sm font-medium ${scanResult.containsSensitiveData
-                                ? `text-${getRiskColor(scanResult.riskLevel)}-800`
-                                : 'text-green-800'
+                            ? `text-${getRiskColor(scanResult.riskLevel)}-800`
+                            : 'text-green-800'
                             }`}>
                             {scanResult.recommendation}
                         </p>
@@ -175,6 +182,24 @@ const SensitiveDataAlert: React.FC<SensitiveDataAlertProps> = ({
                                         </li>
                                     ))}
                                 </ul>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Success Message for Clean Files */}
+                    {!scanResult.containsSensitiveData && (
+                        <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-4">
+                            <div className="flex items-start">
+                                <svg className="h-5 w-5 text-green-500 mt-0.5 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                                <div>
+                                    <h3 className="text-sm font-medium text-green-800 mb-1">File Looks Safe</h3>
+                                    <p className="text-sm text-green-700">
+                                        Our AI analysis found no sensitive information in this file.
+                                        It should be safe to share publicly.
+                                    </p>
+                                </div>
                             </div>
                         </div>
                     )}
@@ -211,18 +236,21 @@ const SensitiveDataAlert: React.FC<SensitiveDataAlertProps> = ({
                             onClick={onClose}
                             className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 hover:bg-gray-50 rounded-md transition-colors"
                         >
-                            Cancel
+                            Close
                         </button>
                         <button
                             onClick={onProceedPublic}
                             className={`px-6 py-2 text-sm font-medium text-white rounded-md transition-colors ${scanResult.containsSensitiveData
-                                    ? 'bg-red-600 hover:bg-red-700'
-                                    : 'bg-green-600 hover:bg-green-700'
+                                ? 'bg-red-600 hover:bg-red-700'
+                                : 'bg-green-600 hover:bg-green-700'
                                 }`}
                         >
-                            {scanResult.containsSensitiveData ? 'Make Public Anyway' : 'Make Public'}
+                            {scanResult.containsSensitiveData ? 'Make Public Anyway' : 'Proceed - Make Public'}
                         </button>
+
                     </div>
+
+                    {/* </div> */}
                 </div>
             </div>
         </div>

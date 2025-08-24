@@ -192,22 +192,22 @@ const ShareModal: React.FC<ShareModalProps> = ({
     };
 
     const handleScanComplete = (result: ScanResult) => {
+        console.log('🔍 Scan completed with result:', result);
         setScanResult(result);
         setShowScanModal(false);
 
-        if (result.containsSensitiveData) {
+        // Add a small delay to ensure scan modal is closed before opening alert
+        setTimeout(() => {
+            // Always show the alert modal to display scan results
+            console.log('📋 Showing scan results modal');
             setShowSensitiveAlert(true);
-        } else {
-            // No sensitive data found, proceed with making public
-            if (pendingPublicStatus !== null) {
-                updateFileAccess(pendingPublicStatus);
-                setPendingPublicStatus(null);
-            }
-        }
+        }, 100);
     };
 
     const handleProceedPublic = async () => {
+        console.log('✅ User chose to proceed with making file public');
         setShowSensitiveAlert(false);
+
         if (pendingPublicStatus !== null) {
             await updateFileAccess(pendingPublicStatus);
             setPendingPublicStatus(null);
@@ -215,6 +215,7 @@ const ShareModal: React.FC<ShareModalProps> = ({
     };
 
     const handleKeepPrivate = () => {
+        console.log('🔒 User chose to keep file private');
         setShowSensitiveAlert(false);
         setPendingPublicStatus(null);
         setIsPublic(false); // Keep file private
@@ -222,12 +223,14 @@ const ShareModal: React.FC<ShareModalProps> = ({
     };
 
     const handleCloseScanModal = () => {
+        console.log('🔒 Closing scan modal');
         setShowScanModal(false);
         setPendingPublicStatus(null);
         setIsPublic(false); // Revert to private if scan is cancelled
     };
 
     const handleCloseSensitiveAlert = () => {
+        console.log('🔒 Closing sensitive alert modal');
         setShowSensitiveAlert(false);
         setPendingPublicStatus(null);
         setIsPublic(false); // Revert to private if alert is cancelled
@@ -468,17 +471,22 @@ const ShareModal: React.FC<ShareModalProps> = ({
                 isOpen={showScanModal}
             />
 
-            {/* Sensitive Data Alert Modal */}
-            {scanResult && (
-                <SensitiveDataAlert
-                    scanResult={scanResult}
-                    filename={userData.name || 'Unknown File'}
-                    onProceedPublic={handleProceedPublic}
-                    onKeepPrivate={handleKeepPrivate}
-                    onClose={handleCloseSensitiveAlert}
-                    isOpen={showSensitiveAlert}
-                />
-            )}
+            {/* Sensitive Data Alert Modal - Always render but control visibility with isOpen */}
+            <SensitiveDataAlert
+                scanResult={scanResult || {
+                    containsSensitiveData: false,
+                    riskLevel: 'LOW',
+                    confidence: 0,
+                    sensitiveDataTypes: [],
+                    details: [],
+                    recommendation: 'No sensitive data detected.'
+                }}
+                filename={userData.name || 'Unknown File'}
+                onProceedPublic={handleProceedPublic}
+                onKeepPrivate={handleKeepPrivate}
+                onClose={handleCloseSensitiveAlert}
+                isOpen={showSensitiveAlert}
+            />
         </div>
     );
 };

@@ -24,11 +24,13 @@ interface FileItemMenuProps {
     file: FileData;
     onDownload: (fileId: string, fileName: string) => void;
     onDelete: (fileId: string, fileName: string) => void;
-    onRename?: (fileId: string, newName: string) => void;
-    onCopy?: (fileId: string) => void;
+    // These props are defined but not currently used in the component
+    // Commenting them out to fix the unused variables warning
+    // onRename?: (fileId: string, newName: string) => void;
+    // onCopy?: (fileId: string) => void;
     onPreview?: (file: FileData) => void;
     onShare?: (fileId: string) => void;
-    onMove?: (fileId: string, destinationFolderId: string) => void;
+    // onMove?: (fileId: string, destinationFolderId: string) => void;
     onToggleStar?: (fileId: string) => void; // Add this prop
     isParentHovered?: boolean;
 }
@@ -115,11 +117,11 @@ const FileItemMenu: React.FC<FileItemMenuProps> = ({
     file,
     onDownload,
     onDelete,
-    onRename,
-    onCopy,
+
+
     onPreview,
     onShare,
-    onMove,
+
     onToggleStar,
     isParentHovered
 }) => {

@@ -26,11 +26,11 @@ interface FileItemProps {
     file: FileData;
     onDownload: (fileId: string, fileName: string) => void;
     onDelete: (fileId: string, fileName: string) => void;
-    onRename?: (fileId: string, newName: string) => void;
-    onCopy?: (fileId: string) => void;
+   
+   
     onShare?: (fileId: string) => void;
     onPreview?: (file: FileData) => void;
-    onMove?: (fileId: string) => void;
+  
     onToggleStar?: (fileId: string) => void;
     viewMode?: 'list' | 'grid';
 }
@@ -128,11 +128,10 @@ const FileItem: React.FC<FileItemProps> = ({
     file,
     onDownload,
     onDelete,
-    onRename,
-    onCopy,
+
     onShare,
     onPreview,
-    onMove,
+   
     onToggleStar,
     viewMode = 'list'
 }) => {
@@ -162,11 +161,11 @@ const FileItem: React.FC<FileItemProps> = ({
                         file={file}
                         onDownload={onDownload}
                         onDelete={onDelete}
-                        onRename={onRename}
-                        onCopy={onCopy}
+                       
+                     
                         onShare={onShare}
                         onPreview={onPreview}
-                        onMove={onMove}
+                       
                         onToggleStar={onToggleStar}
                         isParentHovered={isHovered}
                     />
@@ -301,11 +300,10 @@ const FileItem: React.FC<FileItemProps> = ({
                         file={file}
                         onDownload={onDownload}
                         onDelete={onDelete}
-                        onRename={onRename}
-                        onCopy={onCopy}
+                        
                         onShare={onShare}
                         onPreview={onPreview}
-                        onMove={onMove}
+                       
                         onToggleStar={onToggleStar}
                         isParentHovered={isHovered}
                     />

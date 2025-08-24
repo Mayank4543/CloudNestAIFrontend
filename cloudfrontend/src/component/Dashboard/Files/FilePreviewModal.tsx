@@ -67,44 +67,65 @@ const FilePreviewModal: React.FC<FilePreviewModalProps> = ({
         setError(null);
 
         try {
-            // For semantic search results, use the direct URL if available
-            if (file.url && file.url.startsWith('http')) {
-                const mimetype = file.mimetype || '';
+            // Always use proxy URL for reliable access that handles authentication and expired URLs
+            const filename = file.filename || file.originalname || 'unknown_file';
+            const baseUrl = `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/files/proxy/${encodeURIComponent(filename)}`;
 
-                if (mimetype.includes('presentation') || mimetype.includes('powerpoint') || file.originalname.endsWith('.ppt') || file.originalname.endsWith('.pptx')) {
-                    // Use Office Online Viewer for PowerPoint files
-                    setPreviewUrl(`https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(file.url)}`);
-                } else if (mimetype.includes('document') || mimetype.includes('msword') || file.originalname.endsWith('.doc') || file.originalname.endsWith('.docx')) {
-                    // Use Office Online Viewer for Word documents
-                    setPreviewUrl(`https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(file.url)}`);
-                } else if (mimetype.includes('sheet') || mimetype.includes('excel') || file.originalname.endsWith('.xls') || file.originalname.endsWith('.xlsx')) {
-                    // Use Office Online Viewer for Excel files
-                    setPreviewUrl(`https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(file.url)}`);
-                } else {
-                    // For other file types (images, PDFs, videos, etc.), use direct URL
-                    setPreviewUrl(file.url);
-                }
-            } else {
-                // Fallback to proxy URL for regular files
-                const filename = file.filename || file.originalname || 'unknown_file';
-                const baseUrl = `${process.env.NEXT_PUBLIC_API_BASE_URL }/api/files/proxy/${encodeURIComponent(filename)}`;
+            // For different file types, we might need different handling
+            const mimetype = file.mimetype || '';
 
-                // For different file types, we might need different handling
-                const mimetype = file.mimetype || '';
+            if (mimetype.includes('presentation') || mimetype.includes('powerpoint') || filename.endsWith('.ppt') || filename.endsWith('.pptx')) {
+                // Use Office Online Viewer for PowerPoint files
+                setPreviewUrl(`https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(baseUrl)}`);
+            } else if (mimetype.includes('document') || mimetype.includes('msword') || filename.endsWith('.doc') || filename.endsWith('.docx')) {
+                // Use Office Online Viewer for Word documents
+                setPreviewUrl(`https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(baseUrl)}`);
+            } else if (mimetype.includes('sheet') || mimetype.includes('excel') || filename.endsWith('.xls') || filename.endsWith('.xlsx')) {
+                // Use Office Online Viewer for Excel files
+                setPreviewUrl(`https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(baseUrl)}`);
+            } else if (mimetype.includes('image')) {
+                // For images, fetch with authentication and create blob URL
+                try {
+                    const token = localStorage.getItem('token');
+                    const response = await fetch(baseUrl, {
+                        headers: token ? { 'Authorization': `Bearer ${token}` } : {},
+                    });
 
-                if (mimetype.includes('presentation') || mimetype.includes('powerpoint') || filename.endsWith('.ppt') || filename.endsWith('.pptx')) {
-                    // Use Office Online Viewer for PowerPoint files
-                    setPreviewUrl(`https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(baseUrl)}`);
-                } else if (mimetype.includes('document') || mimetype.includes('msword') || filename.endsWith('.doc') || filename.endsWith('.docx')) {
-                    // Use Office Online Viewer for Word documents
-                    setPreviewUrl(`https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(baseUrl)}`);
-                } else if (mimetype.includes('sheet') || mimetype.includes('excel') || filename.endsWith('.xls') || filename.endsWith('.xlsx')) {
-                    // Use Office Online Viewer for Excel files
-                    setPreviewUrl(`https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(baseUrl)}`);
-                } else {
-                    // For other file types (images, PDFs, videos, etc.), use direct URL
+                    if (!response.ok) {
+                        throw new Error(`Failed to fetch image: ${response.status}`);
+                    }
+
+                    const blob = await response.blob();
+                    const blobUrl = URL.createObjectURL(blob);
+                    setPreviewUrl(blobUrl);
+                } catch (fetchError) {
+                    console.error('Error fetching image:', fetchError);
+                    // Fallback to direct URL without auth
                     setPreviewUrl(baseUrl);
                 }
+            } else if (mimetype.includes('video')) {
+                // For videos, also fetch with authentication and create blob URL  
+                try {
+                    const token = localStorage.getItem('token');
+                    const response = await fetch(baseUrl, {
+                        headers: token ? { 'Authorization': `Bearer ${token}` } : {},
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(`Failed to fetch video: ${response.status}`);
+                    }
+
+                    const blob = await response.blob();
+                    const blobUrl = URL.createObjectURL(blob);
+                    setPreviewUrl(blobUrl);
+                } catch (fetchError) {
+                    console.error('Error fetching video:', fetchError);
+                    // Fallback to direct URL without auth
+                    setPreviewUrl(baseUrl);
+                }
+            } else {
+                // For other file types (PDFs, etc.), use proxy URL
+                setPreviewUrl(baseUrl);
             }
 
         } catch (err) {
@@ -193,20 +214,39 @@ const FilePreviewModal: React.FC<FilePreviewModalProps> = ({
         const mimetype = file.mimetype || '';
 
         if (mimetype.includes('image')) {
-            return (
-                <Image
-                    src={previewUrl}
-                    alt={file.originalname}
-                    width={800}
-                    height={600}
-                    className="max-w-[90%] max-h-[90%] object-contain shadow-[0_10px_40px_rgba(0,0,0,0.15)] rounded-lg transition-all duration-500 hover:scale-[1.02]"
-                    onLoad={() => setLoading(false)}
-                    onError={() => {
-                        setError('Unable to load image');
-                        setLoading(false);
-                    }}
-                />
-            );
+            // Check if it's a blob URL (created from authenticated fetch)
+            if (previewUrl.startsWith('blob:')) {
+                return (
+                    <Image
+                        src={previewUrl}
+                        alt={file.originalname}
+                        width={800}
+                        height={600}
+                        className="max-w-[90%] max-h-[90%] object-contain shadow-[0_10px_40px_rgba(0,0,0,0.15)] rounded-lg transition-all duration-500 hover:scale-[1.02]"
+                        onLoad={() => setLoading(false)}
+                        onError={() => {
+                            setError('Unable to load image');
+                            setLoading(false);
+                        }}
+                    />
+                );
+            } else {
+                // Use Next.js Image for regular URLs
+                return (
+                    <Image
+                        src={previewUrl}
+                        alt={file.originalname}
+                        width={800}
+                        height={600}
+                        className="max-w-[90%] max-h-[90%] object-contain shadow-[0_10px_40px_rgba(0,0,0,0.15)] rounded-lg transition-all duration-500 hover:scale-[1.02]"
+                        onLoad={() => setLoading(false)}
+                        onError={() => {
+                            setError('Unable to load image');
+                            setLoading(false);
+                        }}
+                    />
+                );
+            }
         } else if (mimetype.includes('video')) {
             return (
                 <div className="relative max-w-[90%] max-h-[90%] shadow-[0_8px_40px_rgba(0,0,0,0.2)] rounded-xl overflow-hidden">

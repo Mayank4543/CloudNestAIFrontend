@@ -217,11 +217,9 @@ const FilePreviewModal: React.FC<FilePreviewModalProps> = ({
             // Check if it's a blob URL (created from authenticated fetch)
             if (previewUrl.startsWith('blob:')) {
                 return (
-                    <Image
+                    <img
                         src={previewUrl}
                         alt={file.originalname}
-                        width={800}
-                        height={600}
                         className="max-w-[90%] max-h-[90%] object-contain shadow-[0_10px_40px_rgba(0,0,0,0.15)] rounded-lg transition-all duration-500 hover:scale-[1.02]"
                         onLoad={() => setLoading(false)}
                         onError={() => {

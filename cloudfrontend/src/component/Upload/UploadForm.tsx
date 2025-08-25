@@ -103,16 +103,26 @@ const UploadForm: React.FC = () => {
         }
     };
 
-    // Remove selected files (for cut mode)
+    // Remove selected files
     const handleRemoveFiles = () => {
-        setFiles(null);
-        setAiSelectedTags([]);
-        // Reset the file input
-        const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
-        if (fileInput) {
-            fileInput.value = '';
+        if (!files || files.length === 0) {
+            showToastMessage('No files selected to remove', 'info');
+            return;
         }
-        showToastMessage('Files removed', 'info');
+
+        // Ask for confirmation before removing files
+        if (confirm(`Are you sure you want to remove ${files.length} file${files.length > 1 ? 's' : ''}?`)) {
+            setFiles(null);
+            setAiSelectedTags([]);
+
+            // Reset the file input
+            const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
+            if (fileInput) {
+                fileInput.value = '';
+            }
+
+            showToastMessage(`${files.length} file${files.length > 1 ? 's' : ''} removed`, 'info');
+        }
     };
 
     // Handle tag input with chips functionality
@@ -181,21 +191,7 @@ const UploadForm: React.FC = () => {
     };
 
     // Test CORS connectivity
-    const testCORSConnection = async () => {
-        try {
-            console.log('🧪 Testing CORS connection...');
-            const healthResponse = await api.health();
-            console.log('✅ Health check passed:', healthResponse.data);
 
-            const corsResponse = await api.corsTest();
-            console.log('✅ CORS test passed:', corsResponse.data);
-
-            showToastMessage('Connection test successful!', 'success');
-        } catch (error) {
-            console.error('❌ Connection test failed:', error);
-            showToastMessage('Connection test failed. Check console for details.', 'error');
-        }
-    };
 
     // Handle form submission
     const handleSubmit = async (e: FormEvent) => {
@@ -221,16 +217,8 @@ const UploadForm: React.FC = () => {
         setResponseMessage('');
 
         try {
-            // Debug: Test connection before upload
-            console.log('🔍 Upload attempt details:', {
-                fileCount: files.length,
-                fileName: files[0]?.name,
-                fileSize: files[0]?.size,
-                fileType: files[0]?.type,
-                partition: selectedPartition,
-                hasAuthToken: !!authToken,
-                apiBaseUrl: process.env.NEXT_PUBLIC_API_BASE_URL
-            });
+
+
 
             const formData = new FormData();
 
@@ -370,17 +358,7 @@ const UploadForm: React.FC = () => {
                             Upload Files
                         </h2>
                         <div className="flex items-center space-x-2">
-                            {/* Debug button */}
-                            <button
-                                onClick={testCORSConnection}
-                                className="inline-flex items-center text-sm text-white/80 hover:text-white transition-all duration-150 bg-white/10 hover:bg-white/20 px-3 py-1 rounded-lg"
-                                title="Test server connection"
-                            >
-                                <svg className="mr-2 h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                </svg>
-                                Test Connection
-                            </button>
+
                             <a
                                 href="/dashboard"
                                 className="inline-flex items-center text-sm text-white/80 hover:text-white transition-all duration-150 bg-white/10 hover:bg-white/20 px-3 py-1 rounded-lg"
@@ -467,55 +445,18 @@ const UploadForm: React.FC = () => {
                                             Selected Files ({files.length})
                                         </h3>
 
-                                        {/* Enhanced Cut/Copy Controls */}
+                                        {/* Simple Remove Files Control */}
                                         <div className="flex items-center space-x-3">
-                                            <div className="flex items-center bg-gray-50 rounded-lg px-3 py-1">
-                                                <input
-                                                    type="checkbox"
-                                                    id="cutMode"
-                                                    checked={cutMode}
-                                                    onChange={(e) => setCutMode(e.target.checked)}
-                                                    className="h-4 w-4 text-[#18b26f] focus:ring-[#18b26f] border-gray-300 rounded"
-                                                />
-                                                <label htmlFor="cutMode" className="ml-2 text-sm text-gray-700 font-medium">
-                                                    Cut mode
-                                                </label>
-                                            </div>
-
                                             <button
                                                 type="button"
-                                                onClick={handleCutCopy}
-                                                className="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#18b26f] transition-colors"
+                                                onClick={handleRemoveFiles}
+                                                className="inline-flex items-center px-4 py-2 border border-red-300 shadow-sm text-sm font-medium rounded-lg text-red-700 bg-red-50 hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors"
                                             >
-                                                {cutMode ? (
-                                                    <>
-                                                        <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M14.828 14.828a4 4 0 01-5.656 0M9 10h1m4 0h1m-6 4h1m4 0h1m-7-4h1m4 0h1M7 16h10M7 8h10"></path>
-                                                        </svg>
-                                                        Cut
-                                                    </>
-                                                ) : (
-                                                    <>
-                                                        <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
-                                                        </svg>
-                                                        Copy
-                                                    </>
-                                                )}
+                                                <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1-1H8a1 1 0 00-1 1v3M4 7h16"></path>
+                                                </svg>
+                                                Remove File
                                             </button>
-
-                                            {cutMode && (
-                                                <button
-                                                    type="button"
-                                                    onClick={handleRemoveFiles}
-                                                    className="inline-flex items-center px-4 py-2 border border-red-300 shadow-sm text-sm font-medium rounded-lg text-red-700 bg-red-50 hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors"
-                                                >
-                                                    <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1-1H8a1 1 0 00-1 1v3M4 7h16"></path>
-                                                    </svg>
-                                                    Remove
-                                                </button>
-                                            )}
                                         </div>
                                     </div>
 

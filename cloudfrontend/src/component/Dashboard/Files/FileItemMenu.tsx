@@ -57,6 +57,21 @@ const MenuItem: React.FC<MenuItemProps> = ({
     disabled = false,
 }) => {
     const [showSubmenu, setShowSubmenu] = useState(false);
+    const [isMobileView, setIsMobileView] = useState(false);
+    
+    // Check if we're on a mobile device - using a larger breakpoint for better detection
+    useEffect(() => {
+        const checkMobile = () => {
+            setIsMobileView(window.innerWidth < 768); // Increased threshold for better mobile detection
+        };
+        
+        // Initial check
+        checkMobile();
+        
+        // Re-check on window resize
+        window.addEventListener('resize', checkMobile);
+        return () => window.removeEventListener('resize', checkMobile);
+    }, []);
 
     return (
         <>
@@ -71,10 +86,18 @@ const MenuItem: React.FC<MenuItemProps> = ({
                 `}
                 onClick={disabled ? undefined : (e) => {
                     e?.stopPropagation();
-                    onClick?.();
+                    
+                    // For submenu items on mobile, toggle submenu visibility
+                    if (hasSubmenu && isMobileView) {
+                        e.preventDefault();
+                        setShowSubmenu(!showSubmenu);
+                    } else {
+                        // For regular items or desktop, perform the action
+                        onClick?.();
+                    }
                 }}
-                onMouseEnter={() => hasSubmenu && setShowSubmenu(true)}
-                onMouseLeave={() => hasSubmenu && setShowSubmenu(false)}
+                onMouseEnter={() => !isMobileView && hasSubmenu && setShowSubmenu(true)}
+                onMouseLeave={() => !isMobileView && hasSubmenu && setShowSubmenu(false)}
             >
                 <span className="flex items-center justify-center w-4 h-4 mr-3 flex-shrink-0">
                     {icon}
@@ -94,14 +117,20 @@ const MenuItem: React.FC<MenuItemProps> = ({
                     </svg>
                 )}
 
-                {/* Submenu */}
+                {/* Submenu with adaptive positioning - positioned ABOVE on mobile screens */}
                 {hasSubmenu && showSubmenu && submenu && (
                     <div
-                        className="absolute left-full top-0 ml-2 w-48 bg-white rounded-lg shadow-xl border border-gray-200 py-1 animate-in slide-in-from-left-2 duration-200"
+                        className={`absolute bg-white rounded-lg shadow-xl border border-gray-200 py-1 duration-200 ${
+                          // Mobile screens: position above the main menu with animation
+                          isMobileView 
+                            ? 'bottom-full left-0 mb-1 w-56 animate-in slide-in-from-top-2'
+                            // Desktop: position to the right with animation
+                            : 'top-0 left-full ml-0.5 w-48 animate-in slide-in-from-right-2'
+                        }`}
                         style={{
                             maxHeight: '300px',
                             overflowY: 'auto',
-                            zIndex: 10000
+                            zIndex: 10000,
                         }}
                     >
                         {submenu}
@@ -127,6 +156,7 @@ const FileItemMenu: React.FC<FileItemMenuProps> = ({
 }) => {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const [menuPosition, setMenuPosition] = useState<'bottom' | 'top'>('bottom');
+    const [isMobileView, setIsMobileView] = useState(false);
     const menuRef = useRef<HTMLDivElement>(null);
     const buttonRef = useRef<HTMLButtonElement>(null);
 
@@ -158,6 +188,20 @@ const FileItemMenu: React.FC<FileItemMenuProps> = ({
 
         document.addEventListener('mousedown', handleClickOutside);
         return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
+
+    // Check if we're on a mobile device
+    useEffect(() => {
+        const checkMobile = () => {
+            setIsMobileView(window.innerWidth < 768); // Use same breakpoint as in MenuItem
+        };
+        
+        // Initial check
+        checkMobile();
+        
+        // Re-check on window resize
+        window.addEventListener('resize', checkMobile);
+        return () => window.removeEventListener('resize', checkMobile);
     }, []);
 
     // Calculate menu position based on available space
@@ -267,36 +311,80 @@ const FileItemMenu: React.FC<FileItemMenuProps> = ({
         </div>
     );
 
-    // Share Submenu
+    // Share Submenu - optimized for mobile with enhanced styling
     const shareSubmenu = (
         <div className="py-1">
-            <MenuItem
-                icon={
-                    <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
-                    </svg>
-                }
-                label="Get Link"
-                onClick={handleGetLink}
-            />
-            <MenuItem
-                icon={
-                    <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 7.89a2 2 0 002.83 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                    </svg>
-                }
-                label="Email"
-                onClick={handleEmailShare}
-            />
-            <MenuItem
-                icon={
-                    <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
-                    </svg>
-                }
-                label="Share with others"
-                onClick={handleShareFile}
-            />
+            {isMobileView ? (
+                // Mobile-optimized menu items with larger tap targets
+                <>
+                    <div 
+                        className="flex items-center px-4 py-3 text-sm cursor-pointer hover:bg-gray-50 text-gray-700"
+                        onClick={handleGetLink}
+                    >
+                        <span className="flex items-center justify-center w-6 h-6 mr-3 bg-blue-50 rounded-full">
+                            <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+                            </svg>
+                        </span>
+                        <span className="font-medium">Copy Link</span>
+                    </div>
+                    
+                    <div 
+                        className="flex items-center px-4 py-3 text-sm cursor-pointer hover:bg-gray-50 text-gray-700"
+                        onClick={handleEmailShare}
+                    >
+                        <span className="flex items-center justify-center w-6 h-6 mr-3 bg-green-50 rounded-full">
+                            <svg className="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 7.89a2 2 0 002.83 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                            </svg>
+                        </span>
+                        <span className="font-medium">Email</span>
+                    </div>
+                    
+                    <div 
+                        className="flex items-center px-4 py-3 text-sm cursor-pointer hover:bg-gray-50 text-gray-700"
+                        onClick={handleShareFile}
+                    >
+                        <span className="flex items-center justify-center w-6 h-6 mr-3 bg-purple-50 rounded-full">
+                            <svg className="w-4 h-4 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+                            </svg>
+                        </span>
+                        <span className="font-medium">Share with others</span>
+                    </div>
+                </>
+            ) : (
+                // Desktop menu items
+                <>
+                    <MenuItem
+                        icon={
+                            <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+                            </svg>
+                        }
+                        label="Copy Link"
+                        onClick={handleGetLink}
+                    />
+                    <MenuItem
+                        icon={
+                            <svg className="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 7.89a2 2 0 002.83 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                            </svg>
+                        }
+                        label="Email"
+                        onClick={handleEmailShare}
+                    />
+                    <MenuItem
+                        icon={
+                            <svg className="w-4 h-4 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+                            </svg>
+                        }
+                        label="Share with others"
+                        onClick={handleShareFile}
+                    />
+                </>
+            )}
         </div>
     );
 
@@ -401,11 +489,11 @@ const FileItemMenu: React.FC<FileItemMenuProps> = ({
 
                     <MenuItem
                         icon={
-                            <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg className="w-4 h-4 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
                             </svg>
                         }
-                        label="Share"
+                        label={isMobileView ? "Share Options" : "Share"}
                         hasSubmenu={true}
                         submenu={shareSubmenu}
                     />
